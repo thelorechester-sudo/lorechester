@@ -1,26 +1,122 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   Lorechester design tokens
+   Change the brand here — nothing below hardcodes a hex value.
+   ========================================================================== */
+
+@theme {
+  /* Palette --------------------------------------------------------------- */
+  --color-ink: #0b0b0c; /* near-black, all primary text and dark sections */
+  --color-ink-soft: #2a2a2d;
+  --color-paper: #faf9f6; /* warm off-white, the page ground */
+  --color-paper-pure: #ffffff;
+  --color-muted: #6e6e73; /* secondary copy, meta labels */
+  --color-line: #e3e1db; /* hairline rules and borders */
+  /* Oxblood, sampled from the CLASH DIVISION label artwork. */
+  --color-accent: #980000; /* sale, sold out, focus */
+  --color-accent-soft: #f7eaea;
+
+  /* Type ------------------------------------------------------------------ */
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-brand), ui-monospace, monospace;
+
+  /* Editorial display sizes. Tight tracking is the whole look — do not
+     loosen these without changing the brand. */
+  --text-display: clamp(2.5rem, 7vw, 6rem);
+  --text-display--line-height: 0.92;
+  --text-display--letter-spacing: -0.035em;
+
+  --text-headline: clamp(1.75rem, 3.5vw, 3rem);
+  --text-headline--line-height: 1;
+  --text-headline--letter-spacing: -0.025em;
+
+  /* Small uppercase meta labels: nav, prices, sizes, badges. */
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.2;
+  --text-meta--letter-spacing: 0.12em;
+
+  /* Motion ---------------------------------------------------------------- */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ==========================================================================
+   Base
+   ========================================================================== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* Visible focus everywhere, on brand. Never remove without a replacement. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+@utility meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-meta);
+  line-height: var(--text-meta--line-height);
+  letter-spacing: var(--text-meta--letter-spacing);
+  text-transform: uppercase;
+}
+
+/* Full-bleed section inside a padded container. */
+@utility bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+/* Screen-reader-only, for skip links and icon button labels. */
+@utility sr-only-focusable {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+
+  &:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
 }
