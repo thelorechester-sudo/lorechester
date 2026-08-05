@@ -15,6 +15,7 @@ import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
 export const dynamic = "force-dynamic";
 
 export default async function StoreLayout({ children }: LayoutProps<"/">) {
+  // An unconfigured deploy never reaches here — proxy.ts rewrites to /setup.
   const collections = await getCollections();
 
   const links: NavLink[] = [

@@ -35,19 +35,13 @@ export async function createClient() {
   );
 }
 
-/**
- * Service-role client: bypasses Row Level Security.
+/*
+ * There is deliberately no service-role client here.
  *
- * Only for server-side work the user is not allowed to do directly, such as
- * writing files to storage on their behalf. Never import this from a Client
- * Component and never derive the current user from it.
+ * Nothing in this app needs to bypass Row Level Security: image uploads go
+ * from the browser straight to Supabase Storage under the `media_admin_write`
+ * policy, and every server-side read already runs as the `postgres` role over
+ * the direct Drizzle connection. An unused RLS-bypassing client sitting in the
+ * repo is only ever a liability — add one back if a real need appears, not
+ * before.
  */
-export function createAdminClient() {
-  return createServerClient(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
-    {
-      cookies: { getAll: () => [], setAll: () => {} },
-    },
-  );
-}

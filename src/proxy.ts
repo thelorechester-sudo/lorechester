@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { missingStoreEnv } from "@/lib/env";
+
 /**
  * Runs before every matched request (Next 16 renamed Middleware to Proxy).
  *
@@ -27,35 +29,49 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  /*
+   * No database configured — show the setup page instead of crashing.
+   *
+   * This used to construct a Supabase client from two non-null assertions, so
+   * an unconfigured deploy threw here, in middleware, before any route ran.
+   * Every page returned a bare "Internal Server Error" with nothing to act on.
+   *
+   * Rewriting is what makes this reliable: a check inside a layout does not
+   * stop the page beneath it rendering (they run in parallel) and its query
+   * would still throw.
+   */
+  const { pathname } = request.nextUrl;
+
+  if (missingStoreEnv().length > 0 && pathname !== "/setup") {
+    return NextResponse.rewrite(new URL("/setup", request.url));
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          for (const { name, value } of cookiesToSet) {
-            request.cookies.set(name, value);
-          }
-          response = NextResponse.next({ request });
-          for (const { name, value, options } of cookiesToSet) {
-            response.cookies.set(name, value, options);
-          }
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        for (const { name, value } of cookiesToSet) {
+          request.cookies.set(name, value);
+        }
+        response = NextResponse.next({ request });
+        for (const { name, value, options } of cookiesToSet) {
+          response.cookies.set(name, value, options);
+        }
       },
     },
-  );
+  });
 
   // Do not remove: this call is what refreshes an expired token.
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   if (!user && pathname.startsWith("/admin") && pathname !== "/admin/login") {
     const loginUrl = request.nextUrl.clone();
