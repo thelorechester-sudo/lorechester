@@ -46,8 +46,21 @@ export async function proxy(request: NextRequest) {
     return NextResponse.rewrite(new URL("/setup", request.url));
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  /*
+   * /setup is excluded from the rewrite above, so it is the one path that
+   * reaches here while unconfigured — and without this guard it built a client
+   * from two undefined values and threw. The page whose entire job is to
+   * explain a missing configuration was the only page that 500ed on one.
+   *
+   * Keep the guard even though the rewrite "should" make it unreachable:
+   * this line has taken production down twice.
+   */
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.next({ request });
+  }
 
   let response = NextResponse.next({ request });
 
