@@ -27,6 +27,12 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- Supabase exposes public-schema functions over /rest/v1/rpc/, and this one is
+-- SECURITY DEFINER (runs as the owner, bypassing RLS) and writes to profiles.
+-- It is a trigger function and must never be callable directly. The trigger
+-- still fires — it runs as the table owner, not as the API role.
+revoke execute on function public.handle_new_user() from anon, authenticated, public;
+
 -- Backfill any users that already exist.
 insert into public.profiles (user_id, email)
 select id, email from auth.users
