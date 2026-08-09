@@ -29,9 +29,22 @@ export function LoginForm() {
     });
 
     if (authError) {
-      // Deliberately vague: distinguishing "no such user" from "wrong password"
-      // hands an attacker a list of valid accounts.
-      setError("Email or password is incorrect.");
+      /*
+       * Stay vague about *credentials* only. Distinguishing "no such user"
+       * from "wrong password" hands an attacker a list of valid accounts.
+       *
+       * Everything else — unreachable host, rejected API key, rate limit — is
+       * an operator problem, and reporting it as a bad password sends whoever
+       * is debugging it to look in exactly the wrong place. This message did
+       * precisely that once already.
+       */
+      setError(
+        authError.code === "invalid_credentials"
+          ? "Email or password is incorrect."
+          : authError.code === "email_not_confirmed"
+            ? "That account exists but its email is not confirmed. Confirm it in the Supabase dashboard."
+            : `Sign-in failed (${authError.code ?? authError.status ?? "unknown"}): ${authError.message}`,
+      );
       setPending(false);
       return;
     }
