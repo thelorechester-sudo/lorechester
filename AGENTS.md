@@ -24,8 +24,11 @@ touching any copy or design.
 - **Marks** (in `public/brand/`): a wagon-wheel roundel reading UNITED
   TROUBLEHOOD / LORECHESTER TROOPS, the horizontal wheel + wordmark lockup, a
   castle-and-mountain LORECHESTER OUTWEAR crest, and an Atalanta lion badge.
-  The only horizontal lockup is white-on-transparent, which is why the header
-  is dark.
+  The supplied horizontal lockup is white-on-transparent, so the header does
+  not use it: it sets the lockup live instead — `roundel.png` beside `LORE` /
+  `CHESTER` in Archivo Black on two lines — which is what lets the header sit
+  on paper rather than ink. `roundel-white.png` and `wordmark-white.png` are
+  the variants for dark sections.
 - **Palette**: ink `#0b0b0c`, paper `#faf9f6`, accent oxblood `#980000`
   (sampled from the CLASH DIVISION label). Defined in `globals.css`.
 - **Voice**: "Uncommon wear on your terraces", "Jongeren uit Zuidoost-Azië",
