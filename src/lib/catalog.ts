@@ -1,4 +1,16 @@
-import { and, asc, desc, eq, gt, ilike, inArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  ilike,
+  inArray,
+  lt,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "@/lib/db";
 import {
@@ -85,10 +97,31 @@ export async function getFeaturedProducts(limit = 8): Promise<CardProduct[]> {
   return rows.map(toCard);
 }
 
+/**
+ * Price facet buckets, in rupiah.
+ *
+ * Fixed rather than derived from the catalog: a shopper who bookmarks
+ * `?price=250-380` should still get that band next season, and derived edges
+ * would shift every time a product is added.
+ */
+export const PRICE_BANDS = [
+  { id: "under-250", label: "Under Rp 250.000", min: 0, max: 250_000 },
+  { id: "250-380", label: "Rp 250.000 – 380.000", min: 250_000, max: 380_000 },
+  { id: "380-510", label: "Rp 380.000 – 510.000", min: 380_000, max: 510_000 },
+  { id: "510-plus", label: "Rp 510.000 and up", min: 510_000, max: null },
+] as const;
+
+export type PriceBandId = (typeof PRICE_BANDS)[number]["id"];
+
+export function isPriceBand(value: string | undefined): value is PriceBandId {
+  return PRICE_BANDS.some((band) => band.id === value);
+}
+
 export type ShopFilters = {
   collectionSlug?: string;
   category?: string;
   size?: string;
+  price?: PriceBandId;
   inStockOnly?: boolean;
   sort?: "newest" | "price-asc" | "price-desc";
   /** Free-text search over title, description and category. */
@@ -136,6 +169,14 @@ export async function getShopProducts(
   const conditions = [eq(products.status, "active")];
   if (restrictTo) conditions.push(inArray(products.id, restrictTo));
   if (filters.category) conditions.push(eq(products.category, filters.category));
+
+  // Half-open [min, max) so a product priced exactly at an edge lands in the
+  // upper band only, and no product can match two bands at once.
+  const band = PRICE_BANDS.find((b) => b.id === filters.price);
+  if (band) {
+    conditions.push(gte(products.price, band.min));
+    if (band.max !== null) conditions.push(lt(products.price, band.max));
+  }
 
   const query = filters.q?.trim();
   if (query) {

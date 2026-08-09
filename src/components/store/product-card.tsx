@@ -66,7 +66,7 @@ export function ProductCard({
               </span>
             )}
             {!soldOut && !onSale && lowStock && (
-              <span className="meta bg-paper-pure px-2 py-1 text-accent">
+              <span className="meta bg-muted px-2 py-1 text-paper">
                 {product.totalStock} left
               </span>
             )}
@@ -114,7 +114,7 @@ export function ProductCard({
 /** Shared grid so every listing on the site lines up the same way. */
 export function ProductGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 xl:grid-cols-4">
       {children}
     </div>
   );

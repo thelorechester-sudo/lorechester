@@ -4,11 +4,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductCard, ProductGrid } from "@/components/store/product-card";
-import { ShopFilterBar } from "@/components/store/shop-filters";
+import {
+  ResultCount,
+  ShopFilterPanel,
+  SortMenu,
+} from "@/components/store/shop-filters";
 import {
   getCollectionBySlug,
   getShopProducts,
   getSizes,
+  isPriceBand,
   type ShopFilters,
 } from "@/lib/catalog";
 
@@ -48,18 +53,22 @@ export default async function CollectionPage({
 
   const queryParams = {
     size: one(raw.size),
+    price: one(raw.price),
     sort: one(raw.sort),
     inStock: one(raw.inStock),
+    q: one(raw.q),
   };
 
   const filters: ShopFilters = {
     collectionSlug: slug,
     size: queryParams.size,
+    price: isPriceBand(queryParams.price) ? queryParams.price : undefined,
     inStockOnly: queryParams.inStock === "1",
     sort:
       queryParams.sort === "price-asc" || queryParams.sort === "price-desc"
         ? queryParams.sort
         : "newest",
+    q: queryParams.q,
   };
 
   const [items, sizes] = await Promise.all([
@@ -116,36 +125,42 @@ export default async function CollectionPage({
           </p>
         )}
 
-        <ShopFilterBar
-          base={`/shop/${slug}`}
-          params={queryParams}
-          categories={[]}
-          sizes={sizes}
-          resultCount={items.length}
-        />
+        <div className="lg:flex lg:gap-10">
+          <ShopFilterPanel
+            base={`/shop/${slug}`}
+            params={queryParams}
+            categories={[]}
+            sizes={sizes}
+          />
 
-        <div className="mt-10">
-          {items.length === 0 ? (
-            <div className="border border-dashed border-line px-6 py-20 text-center">
-              <p className="text-sm text-muted">Nothing here yet.</p>
-              <Link
-                href="/shop"
-                className="meta mt-4 inline-block border-b border-ink pb-1"
-              >
-                Shop everything
-              </Link>
+          <div className="min-w-0 flex-1">
+            <div className="mb-6 flex items-center justify-between gap-4 border-b border-line pb-4">
+              <ResultCount count={items.length} query={queryParams.q} />
+              <SortMenu base={`/shop/${slug}`} params={queryParams} />
             </div>
-          ) : (
-            <ProductGrid>
-              {items.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  priority={index < 4}
-                />
-              ))}
-            </ProductGrid>
-          )}
+
+            {items.length === 0 ? (
+              <div className="border border-dashed border-line px-6 py-20 text-center">
+                <p className="text-sm text-muted">Nothing here yet.</p>
+                <Link
+                  href="/shop"
+                  className="meta mt-4 inline-block border-b border-ink pb-1"
+                >
+                  Shop everything
+                </Link>
+              </div>
+            ) : (
+              <ProductGrid>
+                {items.map((product, index) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    priority={index < 4}
+                  />
+                ))}
+              </ProductGrid>
+            )}
+          </div>
         </div>
       </div>
     </div>
