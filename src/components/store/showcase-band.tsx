@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { SectionHead } from "./section-head";
 import { getShowcaseProducts } from "@/lib/content";
 import type { Showcase } from "@/lib/db/schema";
 import { formatIDR } from "@/lib/money";
@@ -18,12 +19,12 @@ export async function ShowcaseBand({ showcase }: { showcase: Showcase }) {
   return (
     <section className="border-t border-line py-16">
       <div className="mx-auto max-w-[1600px] px-5 sm:px-8">
-        <header className="mb-8 flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-headline font-black uppercase">{showcase.title}</h2>
-          <Link href="/lookbook" className="meta text-muted hover:text-ink">
-            All shoots
-          </Link>
-        </header>
+        <SectionHead
+          index="03"
+          title={showcase.title}
+          href="/lookbook"
+          linkLabel="All shoots"
+        />
 
         <div className="grid gap-3 md:grid-cols-3">
           <div className="relative aspect-[4/5] overflow-hidden bg-paper md:col-span-2 md:aspect-[16/10]">

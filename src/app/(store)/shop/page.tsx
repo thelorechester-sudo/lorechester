@@ -60,12 +60,18 @@ export default async function ShopPage({
   ]);
 
   return (
-    <div className="mx-auto max-w-[1600px] px-5 py-10 sm:px-8">
-      <h1 className="text-headline font-black uppercase">
-        {params.q ? "Search" : "Shop all"}
-      </h1>
+    <div className="mx-auto max-w-[1600px] px-5 py-12 sm:px-8">
+      <header className="flex items-baseline gap-4 border-b border-line pb-6 sm:gap-6">
+        <h1 className="text-headline font-black uppercase">
+          {params.q ? "Search" : "Shop all"}
+        </h1>
+        <span aria-hidden className="h-px flex-1 bg-line" />
+        <p className="meta shrink-0 text-muted">
+          {items.length} {items.length === 1 ? "article" : "articles"}
+        </p>
+      </header>
 
-      <div className="mt-8 lg:flex lg:gap-10">
+      <div className="mt-10 lg:flex lg:gap-12">
         <ShopFilterPanel
           base="/shop"
           params={params}

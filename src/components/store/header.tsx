@@ -39,13 +39,13 @@ export function Header({ links }: { links: NavLink[] }) {
   }, [menuOpen]);
 
   /*
-   * Dark header: the only horizontal lockup in the brand assets is
-   * white-on-transparent (SEC WOVEN WHITE), and a black bar suits a terrace
-   * brand better than the white one it replaced.
+   * Light header on paper. The horizontal lockup asset is white-on-transparent
+   * so it can't be used here — the roundel (black with a red hub) plus the
+   * two-line LORE / CHESTER wordmark set in type is the lockup on light ground.
    */
   return (
-    <header className="sticky top-0 z-40 bg-ink text-paper">
-      <div className="mx-auto flex h-20 max-w-[1600px] items-center gap-4 px-5 sm:px-8">
+    <header className="sticky top-0 z-40 border-b border-line bg-paper/90 text-ink backdrop-blur-md">
+      <div className="mx-auto flex h-[72px] max-w-[1600px] items-center gap-4 px-5 sm:px-8">
         <button
           type="button"
           className="-ml-2 p-2 md:hidden"
@@ -61,20 +61,38 @@ export function Header({ links }: { links: NavLink[] }) {
           </span>
         </button>
 
-        <Link href="/" onClick={closeOverlays} className="shrink-0">
+        <Link
+          href="/"
+          onClick={closeOverlays}
+          aria-label="Lorechester, home"
+          className="flex shrink-0 items-center gap-2.5"
+        >
           <Image
-            src="/brand/wordmark-white.png"
-            alt="Lorechester"
-            width={1400}
-            height={391}
-            // Two stacked lines of type, so it needs more height than a
-            // single-line wordmark to stay legible.
+            src="/brand/roundel.png"
+            alt=""
+            aria-hidden
+            width={700}
+            height={700}
             priority
-            className="h-10 w-auto sm:h-12"
+            className="size-9 shrink-0"
           />
+          <span
+            aria-hidden
+            className="text-[0.8125rem] font-black uppercase leading-[0.82] tracking-[-0.02em]"
+          >
+            Lore
+            <br />
+            Chester
+          </span>
         </Link>
 
-        <nav className="ml-6 hidden items-center gap-6 md:flex" aria-label="Main">
+        {/* Centred nav — the utilities sit on the rail, the way in sits in the
+            middle. On md the absolute centring keeps it optically centred no
+            matter how wide the lockup or the bag counter get. */}
+        <nav
+          className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 md:flex"
+          aria-label="Main"
+        >
           {links.map((link) => {
             const active =
               link.href === "/"
@@ -88,54 +106,53 @@ export function Header({ links }: { links: NavLink[] }) {
                 onClick={closeOverlays}
                 aria-current={active ? "page" : undefined}
                 className={
-                  "meta transition-colors hover:text-paper " +
-                  (active
-                    ? "text-paper underline decoration-accent decoration-2 underline-offset-8"
-                    : "text-paper/55")
+                  "meta relative py-1 transition-colors hover:text-ink " +
+                  (active ? "text-ink" : "text-muted")
                 }
               >
                 {link.label}
+                <span
+                  aria-hidden
+                  className={
+                    "absolute -bottom-0.5 left-0 h-px w-full origin-left bg-accent transition-transform duration-300 ease-out-expo " +
+                    (active ? "scale-x-100" : "scale-x-0")
+                  }
+                />
               </Link>
             );
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-4">
           <button
             type="button"
-            className="p-2 text-paper/70 transition-colors hover:text-paper"
-            aria-label="Search"
+            className="meta text-muted transition-colors hover:text-ink"
             aria-expanded={searchOpen}
             onClick={() => {
               setMenuOpen(false);
               setSearchOpen((value) => !value);
             }}
           >
-            <span aria-hidden className="meta">
-              Search
-            </span>
+            {searchOpen ? "Close" : "Search"}
           </button>
 
           <button
             type="button"
             onClick={open}
-            className="relative p-2 text-paper/70 transition-colors hover:text-paper"
+            className="meta text-ink transition-colors hover:text-accent"
             aria-label={`Open bag${hydrated && count > 0 ? `, ${count} items` : ""}`}
           >
-            <span aria-hidden className="meta">
-              Bag
+            Bag
+            <span aria-hidden className="text-muted">
+              {" "}
+              ({hydrated ? count : 0})
             </span>
-            {hydrated && count > 0 && (
-              <span className="absolute -top-0.5 right-0 flex size-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-paper-pure">
-                {count > 9 ? "9+" : count}
-              </span>
-            )}
           </button>
         </div>
       </div>
 
       {searchOpen && (
-        <div className="border-t border-paper/15 bg-ink px-5 py-3 sm:px-8">
+        <div className="border-t border-line bg-paper px-5 py-5 sm:px-8">
           <form
             className="mx-auto flex max-w-[1600px] items-center gap-3"
             onSubmit={(event) => {
@@ -149,11 +166,11 @@ export function Header({ links }: { links: NavLink[] }) {
               ref={searchRef}
               type="search"
               name="q"
-              placeholder="Search products…"
+              placeholder="Search articles or codes — CPS-825"
               aria-label="Search products"
-              className="w-full border-0 border-b border-paper/25 bg-transparent py-2 text-lg tracking-tight text-paper outline-none placeholder:text-paper/40 focus:border-paper"
+              className="w-full border-0 border-b border-line bg-transparent py-2 text-xl tracking-tight outline-none placeholder:text-muted/60 focus:border-ink"
             />
-            <button type="submit" className="meta text-paper/70 hover:text-paper">
+            <button type="submit" className="meta text-muted hover:text-ink">
               Go
             </button>
           </form>
@@ -162,16 +179,16 @@ export function Header({ links }: { links: NavLink[] }) {
 
       {menuOpen && (
         <nav
-          className="border-t border-paper/15 bg-ink px-5 py-4 md:hidden"
+          className="border-t border-line bg-paper px-5 py-6 md:hidden"
           aria-label="Mobile"
         >
-          <ul className="space-y-1">
+          <ul>
             {links.map((link) => (
-              <li key={link.href}>
+              <li key={link.href} className="border-b border-line last:border-0">
                 <Link
                   href={link.href}
                   onClick={closeOverlays}
-                  className="block py-2 text-2xl font-black uppercase tracking-tight text-paper"
+                  className="block py-3 text-2xl font-black uppercase tracking-tight"
                 >
                   {link.label}
                 </Link>

@@ -24,7 +24,9 @@ export function ProductCard({
   return (
     <article className="group relative">
       <Link href={`/product/${product.slug}`} className="block">
-        <div className="relative aspect-[4/5] overflow-hidden bg-paper">
+        {/* Tall, quiet frame on white — the photograph carries the card, so the
+            only chrome is a hairline and a slow zoom on hover. */}
+        <div className="relative aspect-[3/4] overflow-hidden border border-line bg-paper-pure">
           {product.image ? (
             <>
               <Image
@@ -34,7 +36,7 @@ export function ProductCard({
                 priority={priority}
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 className={
-                  "object-cover transition-opacity duration-500 " +
+                  "object-cover transition-all duration-700 ease-out-expo group-hover:scale-[1.04] " +
                   (product.hoverImage ? "group-hover:opacity-0" : "") +
                   (soldOut ? " opacity-60" : "")
                 }
@@ -56,57 +58,71 @@ export function ProductCard({
             </div>
           )}
 
-          <div className="absolute left-0 top-0 flex flex-col items-start gap-1 p-2">
-            {soldOut && (
-              <span className="meta bg-ink px-2 py-1 text-paper">Sold out</span>
-            )}
-            {!soldOut && onSale && (
-              <span className="meta bg-accent px-2 py-1 text-paper-pure">
-                −{discountPercent}%
-              </span>
-            )}
-            {!soldOut && !onSale && lowStock && (
-              <span className="meta bg-muted px-2 py-1 text-paper">
-                {product.totalStock} left
-              </span>
-            )}
-          </div>
+          {/* One status label, never a stack of them — sold out outranks a
+              discount, a discount outranks a low-stock nudge. */}
+          {(soldOut || onSale || lowStock) && (
+            <span
+              className={
+                "meta absolute left-3 top-3 px-2 py-1 " +
+                (soldOut
+                  ? "bg-ink text-paper"
+                  : onSale
+                    ? "bg-accent text-paper-pure"
+                    : "bg-paper-pure text-ink")
+              }
+            >
+              {soldOut
+                ? "Sold out"
+                : onSale
+                  ? `−${discountPercent}%`
+                  : `${product.totalStock} left`}
+            </span>
+          )}
+
+          {/* Sizes ride the image on hover instead of taking a permanent row —
+              that reclaimed row is what lets the grid breathe. Touch has no
+              hover, so below lg they stay visible. */}
+          {product.sizes.length > 1 && (
+            <ul
+              className="absolute inset-x-0 bottom-0 flex flex-wrap gap-2 bg-gradient-to-t from-paper-pure via-paper-pure/90 to-transparent px-3 pb-2.5 pt-8 transition-opacity duration-300 lg:opacity-0 lg:group-hover:opacity-100"
+              aria-label="Available sizes"
+            >
+              {product.sizes.map((variant) => (
+                <li
+                  key={variant.size}
+                  className={
+                    "meta " +
+                    (variant.stock > 0
+                      ? "text-ink"
+                      : "text-muted/50 line-through decoration-1")
+                  }
+                >
+                  {variant.size}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
-        <div className="pt-3">
+        <div className="flex items-baseline justify-between gap-3 pt-3.5">
           <h3 className="text-sm font-medium leading-snug tracking-tight">
             {product.title}
           </h3>
-          <p className="mt-1 flex items-baseline gap-2 font-mono text-sm">
-            <span className={onSale ? "text-accent" : ""}>
-              {formatIDR(product.price)}
-            </span>
+          <p className="flex shrink-0 items-baseline gap-2 font-mono text-xs">
             {onSale && (
-              <span className="text-xs text-muted line-through">
+              <span className="text-muted line-through">
                 {formatIDR(product.compareAtPrice!)}
               </span>
             )}
+            <span className={onSale ? "text-accent" : ""}>
+              {formatIDR(product.price)}
+            </span>
           </p>
         </div>
+        {product.category && (
+          <p className="meta mt-1 text-muted">{product.category}</p>
+        )}
       </Link>
-
-      {product.sizes.length > 1 && (
-        <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Available sizes">
-          {product.sizes.map((variant) => (
-            <li
-              key={variant.size}
-              className={
-                "meta " +
-                (variant.stock > 0
-                  ? "text-muted"
-                  : "text-muted/40 line-through decoration-1")
-              }
-            >
-              {variant.size}
-            </li>
-          ))}
-        </ul>
-      )}
     </article>
   );
 }
@@ -114,7 +130,7 @@ export function ProductCard({
 /** Shared grid so every listing on the site lines up the same way. */
 export function ProductGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 gap-x-5 gap-y-12 md:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 md:grid-cols-3 xl:grid-cols-4">
       {children}
     </div>
   );
