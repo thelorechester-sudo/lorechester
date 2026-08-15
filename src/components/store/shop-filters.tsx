@@ -1,10 +1,36 @@
 import Link from "next/link";
 
+import type { Facet, ShopListing } from "@/lib/catalog";
 import { PRICE_BANDS } from "@/lib/catalog";
 
-type Params = Record<string, string | undefined>;
+/**
+ * The filter state as it lives in the URL. `category` and `size` are
+ * comma-joined lists — `?size=M,L` — so a shopper can ask for more than one
+ * without the query string growing a new syntax.
+ */
+export type Params = {
+  category?: string;
+  size?: string;
+  price?: string;
+  sort?: string;
+  inStock?: string;
+  q?: string;
+};
 
-/** Build the URL for toggling one filter, preserving the others. */
+export function list(value: string | undefined): string[] {
+  return value ? value.split(",").filter(Boolean) : [];
+}
+
+/** Add or remove one value from a comma-joined param. */
+function toggle(value: string | undefined, item: string): string | undefined {
+  const values = list(value);
+  const next = values.includes(item)
+    ? values.filter((v) => v !== item)
+    : [...values, item];
+  return next.length ? next.join(",") : undefined;
+}
+
+/** Build the URL for changing one filter, preserving the others. */
 function buildHref(base: string, params: Params, patch: Params): string {
   const next = new URLSearchParams();
   for (const [key, value] of Object.entries({ ...params, ...patch })) {
@@ -12,6 +38,26 @@ function buildHref(base: string, params: Params, patch: Params): string {
   }
   const query = next.toString();
   return query ? `${base}?${query}` : base;
+}
+
+/** Every filter currently applied, as removable chips. */
+function activeFilters(params: Params) {
+  const active: { label: string; patch: Params }[] = [];
+
+  if (params.q) active.push({ label: `“${params.q}”`, patch: { q: undefined } });
+  for (const category of list(params.category)) {
+    active.push({ label: category, patch: { category: toggle(params.category, category) } });
+  }
+  for (const size of list(params.size)) {
+    active.push({ label: `Size ${size}`, patch: { size: toggle(params.size, size) } });
+  }
+  const band = PRICE_BANDS.find((b) => b.id === params.price);
+  if (band) active.push({ label: band.label, patch: { price: undefined } });
+  if (params.inStock) {
+    active.push({ label: "In stock", patch: { inStock: undefined } });
+  }
+
+  return active;
 }
 
 /* -------------------------------------------------------------------------
@@ -48,6 +94,21 @@ function Check() {
   );
 }
 
+function Cross() {
+  return (
+    <svg
+      viewBox="0 0 10 10"
+      aria-hidden
+      className="size-2.5 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+    >
+      <path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" strokeLinecap="square" />
+    </svg>
+  );
+}
+
 /* -------------------------------------------------------------------------
    Rail primitives
    ---------------------------------------------------------------------- */
@@ -58,21 +119,27 @@ function Check() {
  */
 function Section({
   title,
+  chosen,
   children,
-  defaultOpen = true,
 }: {
   title: string;
+  /** How many values in this group are picked, shown when it is collapsed. */
+  chosen?: number;
   children: React.ReactNode;
-  defaultOpen?: boolean;
 }) {
   return (
     <details
-      open={defaultOpen}
+      open
       className="group/section border-t border-line first:border-t-0"
     >
-      <summary className="meta flex cursor-pointer list-none items-center justify-between px-4 py-3.5 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
+      <summary className="meta flex cursor-pointer list-none items-center gap-2 px-4 py-3.5 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
         {title}
-        <Chevron className="text-muted transition-transform duration-200 group-open/section:rotate-180" />
+        {chosen ? (
+          <span className="flex size-4 items-center justify-center rounded-full bg-ink text-[0.5625rem] tracking-normal text-paper group-open/section:hidden">
+            {chosen}
+          </span>
+        ) : null}
+        <Chevron className="ml-auto text-muted transition-transform duration-200 group-open/section:rotate-180" />
       </summary>
       <div className="px-4 pb-4">{children}</div>
     </details>
@@ -83,42 +150,77 @@ function Section({
  * One facet value. A link, not an input — the filtered listing is a URL, so it
  * is shareable, bookmarkable and works before JS. The box/dot is decorative;
  * `aria-current` is what carries the state.
+ *
+ * A value that would return nothing renders as plain text instead of a link:
+ * there is nowhere useful for it to go, and offering the click is what made
+ * two-click dead ends possible.
  */
 function Option({
   href,
   active,
+  count,
   shape = "box",
   children,
 }: {
   href: string;
   active: boolean;
+  count: number;
   shape?: "box" | "dot";
   children: React.ReactNode;
 }) {
+  const empty = count === 0 && !active;
+
+  const box = (
+    <span
+      aria-hidden
+      className={
+        "flex size-[15px] shrink-0 items-center justify-center border transition-colors " +
+        (shape === "dot" ? "rounded-full " : "") +
+        (active
+          ? "border-ink bg-ink text-paper"
+          : empty
+            ? "border-line bg-paper"
+            : "border-line bg-paper-pure group-hover/opt:border-ink")
+      }
+    >
+      {active &&
+        (shape === "dot" ? (
+          <span className="size-1.5 rounded-full bg-paper" />
+        ) : (
+          <Check />
+        ))}
+    </span>
+  );
+
+  const label = (
+    <>
+      <span className={active ? "text-ink" : undefined}>{children}</span>
+      <span className="ml-auto pl-2 font-mono text-[0.6875rem] tabular-nums text-muted">
+        {count}
+      </span>
+    </>
+  );
+
+  if (empty) {
+    return (
+      <p
+        aria-disabled="true"
+        className="flex items-center gap-2.5 py-1.5 text-sm leading-tight text-muted/45"
+      >
+        {box}
+        {label}
+      </p>
+    );
+  }
+
   return (
     <Link
       href={href}
       aria-current={active ? "true" : undefined}
       className="group/opt flex items-center gap-2.5 py-1.5 text-sm leading-tight text-muted transition-colors hover:text-ink"
     >
-      <span
-        aria-hidden
-        className={
-          "flex size-[15px] shrink-0 items-center justify-center border transition-colors " +
-          (shape === "dot" ? "rounded-full " : "") +
-          (active
-            ? "border-ink bg-ink text-paper"
-            : "border-line bg-paper-pure group-hover/opt:border-ink")
-        }
-      >
-        {active &&
-          (shape === "dot" ? (
-            <span className="size-1.5 rounded-full bg-paper" />
-          ) : (
-            <Check />
-          ))}
-      </span>
-      <span className={active ? "text-ink" : undefined}>{children}</span>
+      {box}
+      {label}
     </Link>
   );
 }
@@ -127,26 +229,22 @@ function Option({
    The rail
    ---------------------------------------------------------------------- */
 
-function Rail({
-  base,
-  params,
-  categories,
-  sizes,
-}: {
+type RailProps = {
   base: string;
   params: Params;
-  categories: string[];
-  sizes: string[];
-}) {
-  const anyFilter = Boolean(
-    params.category || params.size || params.price || params.inStock || params.q,
-  );
+  listing: ShopListing;
+};
+
+function Rail({ base, params, listing }: RailProps) {
+  const active = activeFilters(params);
+  const chosenCategories = list(params.category);
+  const chosenSizes = list(params.size);
 
   return (
     <div className="border border-line bg-paper-pure">
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <span className="meta">Filter</span>
-        {anyFilter && (
+        {active.length > 0 && (
           <Link href={base} className="meta text-accent hover:underline">
             Clear all
           </Link>
@@ -177,50 +275,53 @@ function Rail({
             type="search"
             name="q"
             defaultValue={params.q ?? ""}
-            placeholder="Search"
+            placeholder="Search articles or codes"
             aria-label="Search products"
             className="w-full border border-line bg-paper py-2.5 pl-9 pr-3 text-sm transition-colors placeholder:text-muted focus:border-ink"
           />
         </div>
       </form>
 
-      {categories.length > 0 && (
-        <Section title="Category">
-          {categories.map((category) => (
+      {listing.categories.length > 0 && (
+        <Section title="Category" chosen={chosenCategories.length}>
+          {listing.categories.map((facet: Facet) => (
             <Option
-              key={category}
+              key={facet.value}
+              count={facet.count}
               href={buildHref(base, params, {
-                category: params.category === category ? undefined : category,
+                category: toggle(params.category, facet.value),
               })}
-              active={params.category === category}
+              active={chosenCategories.includes(facet.value)}
             >
-              {category}
+              {facet.value}
             </Option>
           ))}
         </Section>
       )}
 
-      {sizes.length > 0 && (
-        <Section title="Size">
-          {sizes.map((size) => (
+      {listing.sizes.length > 0 && (
+        <Section title="Size" chosen={chosenSizes.length}>
+          {listing.sizes.map((facet: Facet) => (
             <Option
-              key={size}
+              key={facet.value}
+              count={facet.count}
               href={buildHref(base, params, {
-                size: params.size === size ? undefined : size,
+                size: toggle(params.size, facet.value),
               })}
-              active={params.size === size}
+              active={chosenSizes.includes(facet.value)}
             >
-              {size}
+              {facet.value}
             </Option>
           ))}
         </Section>
       )}
 
-      <Section title="Price">
-        {PRICE_BANDS.map((band) => (
+      <Section title="Price" chosen={params.price ? 1 : 0}>
+        {listing.prices.map((band) => (
           <Option
             key={band.id}
             shape="dot"
+            count={band.count}
             href={buildHref(base, params, {
               price: params.price === band.id ? undefined : band.id,
             })}
@@ -231,20 +332,15 @@ function Rail({
         ))}
       </Section>
 
-      <Section title="Availability">
+      <Section title="Availability" chosen={params.inStock ? 1 : 0}>
         <Option
-          shape="dot"
-          href={buildHref(base, params, { inStock: undefined })}
-          active={!params.inStock}
-        >
-          All
-        </Option>
-        <Option
-          shape="dot"
-          href={buildHref(base, params, { inStock: "1" })}
+          count={listing.inStockCount}
+          href={buildHref(base, params, {
+            inStock: params.inStock ? undefined : "1",
+          })}
           active={Boolean(params.inStock)}
         >
-          In stock
+          In stock only
         </Option>
       </Section>
     </div>
@@ -259,17 +355,24 @@ function Rail({
  * exactly one copy is in the accessibility tree at any width, and neither
  * copy needs client-side state to open.
  */
-export function ShopFilterPanel(props: {
-  base: string;
-  params: Params;
-  categories: string[];
-  sizes: string[];
-}) {
+export function ShopFilterPanel(props: RailProps) {
+  const count = activeFilters(props.params).length;
+
   return (
     <>
       <details className="group/mobile mb-6 lg:hidden">
-        <summary className="meta flex cursor-pointer list-none items-center justify-between border border-line bg-paper-pure px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+        <summary className="meta flex cursor-pointer list-none items-center gap-2 border border-line bg-paper-pure px-4 py-3.5 [&::-webkit-details-marker]:hidden">
           Filter
+          {/* The collapsed rail hides every applied filter, so the count has to
+              survive on the summary or the listing looks arbitrary. */}
+          {count > 0 && (
+            <span className="flex size-4 items-center justify-center rounded-full bg-ink text-[0.5625rem] tracking-normal text-paper">
+              {count}
+            </span>
+          )}
+          <span className="ml-auto font-mono text-[0.6875rem] tabular-nums text-muted">
+            {props.listing.items.length}
+          </span>
           <Chevron className="text-muted transition-transform duration-200 group-open/mobile:rotate-180" />
         </summary>
         <div className="mt-2">
@@ -289,6 +392,49 @@ export function ShopFilterPanel(props: {
 /* -------------------------------------------------------------------------
    Toolbar
    ---------------------------------------------------------------------- */
+
+/**
+ * The applied filters, above the grid where the results are. Each chip drops
+ * its own filter — on a dead end that is the move a shopper wants, and
+ * "Clear all" throws away the work that still had results in it.
+ */
+export function ActiveFilters({
+  base,
+  params,
+}: {
+  base: string;
+  params: Params;
+}) {
+  const active = activeFilters(params);
+  if (active.length === 0) return null;
+
+  return (
+    <ul className="mb-5 flex flex-wrap items-center gap-2">
+      {active.map((filter) => (
+        <li key={filter.label}>
+          <Link
+            href={buildHref(base, params, filter.patch)}
+            className="meta flex items-center gap-1.5 border border-line bg-paper-pure py-1.5 pl-3 pr-2.5 text-ink transition-colors hover:border-ink"
+          >
+            {filter.label}
+            <span className="sr-only">— remove filter</span>
+            <Cross />
+          </Link>
+        </li>
+      ))}
+      {active.length > 1 && (
+        <li>
+          <Link
+            href={base}
+            className="meta px-1 text-accent underline-offset-4 hover:underline"
+          >
+            Clear all
+          </Link>
+        </li>
+      )}
+    </ul>
+  );
+}
 
 const SORTS = [
   { value: "newest", label: "Newest" },
@@ -335,17 +481,43 @@ export function SortMenu({ base, params }: { base: string; params: Params }) {
   );
 }
 
-export function ResultCount({
-  count,
-  query,
+/**
+ * The dead end, with a way out of it that is not "start over". Dropping the
+ * last filter added is nearly always what the shopper meant.
+ */
+export function NoResults({
+  base,
+  params,
 }: {
-  count: number;
-  query?: string;
+  base: string;
+  params: Params;
 }) {
+  const active = activeFilters(params);
+  const last = active.at(-1);
+
   return (
-    <p className="meta text-muted">
-      {count} {count === 1 ? "piece" : "pieces"}
-      {query && ` for “${query}”`}
-    </p>
+    <div className="border border-dashed border-line px-6 py-20 text-center">
+      <p className="text-sm text-muted">
+        {active.length > 0
+          ? "Nothing matches every filter at once."
+          : "Nothing here yet."}
+      </p>
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+        {last && (
+          <Link
+            href={buildHref(base, params, last.patch)}
+            className="meta border-b border-ink pb-1"
+          >
+            Drop {last.label}
+          </Link>
+        )}
+        <Link
+          href={active.length > 0 ? base : "/shop"}
+          className="meta border-b border-line pb-1 text-muted hover:border-ink hover:text-ink"
+        >
+          {active.length > 0 ? "Clear all filters" : "Shop everything"}
+        </Link>
+      </div>
+    </div>
   );
 }

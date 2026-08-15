@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductCard, ProductGrid } from "@/components/store/product-card";
 import {
-  ResultCount,
+  ActiveFilters,
+  NoResults,
   ShopFilterPanel,
   SortMenu,
+  list,
+  type Params,
 } from "@/components/store/shop-filters";
 import {
   getCollectionBySlug,
-  getShopProducts,
-  getSizes,
+  getShopListing,
   isPriceBand,
   type ShopFilters,
 } from "@/lib/catalog";
@@ -51,7 +52,8 @@ export default async function CollectionPage({
   const collection = await getCollectionBySlug(slug);
   if (!collection) notFound();
 
-  const queryParams = {
+  const queryParams: Params = {
+    category: one(raw.category),
     size: one(raw.size),
     price: one(raw.price),
     sort: one(raw.sort),
@@ -61,7 +63,8 @@ export default async function CollectionPage({
 
   const filters: ShopFilters = {
     collectionSlug: slug,
-    size: queryParams.size,
+    categories: list(queryParams.category),
+    sizes: list(queryParams.size),
     price: isPriceBand(queryParams.price) ? queryParams.price : undefined,
     inStockOnly: queryParams.inStock === "1",
     sort:
@@ -71,10 +74,8 @@ export default async function CollectionPage({
     q: queryParams.q,
   };
 
-  const [items, sizes] = await Promise.all([
-    getShopProducts(filters),
-    getSizes(),
-  ]);
+  const listing = await getShopListing(filters);
+  const base = `/shop/${slug}`;
 
   const notYetReleased =
     collection.releaseAt && collection.releaseAt > new Date();
@@ -126,32 +127,24 @@ export default async function CollectionPage({
         )}
 
         <div className="lg:flex lg:gap-10">
-          <ShopFilterPanel
-            base={`/shop/${slug}`}
-            params={queryParams}
-            categories={[]}
-            sizes={sizes}
-          />
+          <ShopFilterPanel base={base} params={queryParams} listing={listing} />
 
           <div className="min-w-0 flex-1">
+            <ActiveFilters base={base} params={queryParams} />
+
             <div className="mb-6 flex items-center justify-between gap-4 border-b border-line pb-4">
-              <ResultCount count={items.length} query={queryParams.q} />
-              <SortMenu base={`/shop/${slug}`} params={queryParams} />
+              <p className="meta text-muted" aria-live="polite">
+                {listing.items.length}{" "}
+                {listing.items.length === 1 ? "article" : "articles"}
+              </p>
+              <SortMenu base={base} params={queryParams} />
             </div>
 
-            {items.length === 0 ? (
-              <div className="border border-dashed border-line px-6 py-20 text-center">
-                <p className="text-sm text-muted">Nothing here yet.</p>
-                <Link
-                  href="/shop"
-                  className="meta mt-4 inline-block border-b border-ink pb-1"
-                >
-                  Shop everything
-                </Link>
-              </div>
+            {listing.items.length === 0 ? (
+              <NoResults base={base} params={queryParams} />
             ) : (
               <ProductGrid>
-                {items.map((product, index) => (
+                {listing.items.map((product, index) => (
                   <ProductCard
                     key={product.id}
                     product={product}

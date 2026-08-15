@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { ProductCard, ProductGrid } from "@/components/store/product-card";
 import {
-  ResultCount,
+  ActiveFilters,
+  NoResults,
   ShopFilterPanel,
   SortMenu,
+  list,
+  type Params,
 } from "@/components/store/shop-filters";
-import {
-  getCategories,
-  getShopProducts,
-  getSizes,
-  isPriceBand,
-  type ShopFilters,
-} from "@/lib/catalog";
+import { getShopListing, isPriceBand, type ShopFilters } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -27,12 +23,10 @@ function one(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function ShopPage({
-  searchParams,
-}: PageProps<"/shop">) {
+export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   const raw = await searchParams;
 
-  const params = {
+  const params: Params = {
     category: one(raw.category),
     size: one(raw.size),
     price: one(raw.price),
@@ -42,8 +36,8 @@ export default async function ShopPage({
   };
 
   const filters: ShopFilters = {
-    category: params.category,
-    size: params.size,
+    categories: list(params.category),
+    sizes: list(params.size),
     price: isPriceBand(params.price) ? params.price : undefined,
     inStockOnly: params.inStock === "1",
     sort:
@@ -53,11 +47,7 @@ export default async function ShopPage({
     q: params.q,
   };
 
-  const [items, categories, sizes] = await Promise.all([
-    getShopProducts(filters),
-    getCategories(),
-    getSizes(),
-  ]);
+  const listing = await getShopListing(filters);
 
   return (
     <div className="mx-auto max-w-[1600px] px-5 py-12 sm:px-8">
@@ -66,40 +56,29 @@ export default async function ShopPage({
           {params.q ? "Search" : "Shop all"}
         </h1>
         <span aria-hidden className="h-px flex-1 bg-line" />
-        <p className="meta shrink-0 text-muted">
-          {items.length} {items.length === 1 ? "article" : "articles"}
-        </p>
       </header>
 
       <div className="mt-10 lg:flex lg:gap-12">
-        <ShopFilterPanel
-          base="/shop"
-          params={params}
-          categories={categories}
-          sizes={sizes}
-        />
+        <ShopFilterPanel base="/shop" params={params} listing={listing} />
 
         <div className="min-w-0 flex-1">
+          <ActiveFilters base="/shop" params={params} />
+
           <div className="mb-6 flex items-center justify-between gap-4 border-b border-line pb-4">
-            <ResultCount count={items.length} query={params.q} />
+            {/* The one place the count is stated. It used to be here and in the
+                page header, in two different nouns. */}
+            <p className="meta text-muted" aria-live="polite">
+              {listing.items.length}{" "}
+              {listing.items.length === 1 ? "article" : "articles"}
+            </p>
             <SortMenu base="/shop" params={params} />
           </div>
 
-          {items.length === 0 ? (
-            <div className="border border-dashed border-line px-6 py-20 text-center">
-              <p className="text-sm text-muted">
-                Nothing matches those filters.
-              </p>
-              <Link
-                href="/shop"
-                className="meta mt-4 inline-block border-b border-ink pb-1"
-              >
-                Clear filters
-              </Link>
-            </div>
+          {listing.items.length === 0 ? (
+            <NoResults base="/shop" params={params} />
           ) : (
             <ProductGrid>
-              {items.map((product, index) => (
+              {listing.items.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}

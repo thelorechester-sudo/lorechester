@@ -80,7 +80,7 @@ export default async function ProductPage({
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8">
+    <div className="mx-auto max-w-[1200px] px-5 py-8 sm:px-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -103,7 +103,7 @@ export default async function ProductPage({
         )}
       </nav>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,600px)_minmax(0,1fr)] lg:gap-16">
         <ProductGallery images={product.images} title={product.title} />
 
         <div className="lg:sticky lg:top-20 lg:self-start">

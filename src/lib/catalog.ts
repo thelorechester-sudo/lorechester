@@ -1,24 +1,7 @@
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gt,
-  gte,
-  ilike,
-  inArray,
-  lt,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db";
-import {
-  collections,
-  productCollections,
-  products,
-  variants,
-} from "@/lib/db/schema";
+import { collections, productCollections, products } from "@/lib/db/schema";
 
 /**
  * Read-side catalog queries shared by the storefront.
@@ -119,8 +102,10 @@ export function isPriceBand(value: string | undefined): value is PriceBandId {
 
 export type ShopFilters = {
   collectionSlug?: string;
-  category?: string;
-  size?: string;
+  /** Multi-select: a product matches if it is in any of the listed categories. */
+  categories?: string[];
+  /** Multi-select: a product matches if it comes in any of the listed sizes. */
+  sizes?: string[];
   price?: PriceBandId;
   inStockOnly?: boolean;
   sort?: "newest" | "price-asc" | "price-desc";
@@ -128,86 +113,186 @@ export type ShopFilters = {
   q?: string;
 };
 
-/** Escape LIKE wildcards so a search for "50%" doesn't match everything. */
-function escapeLike(input: string): string {
-  return input.replace(/[\\%_]/g, (char) => `\\${char}`);
-}
+/**
+ * One facet value and how many articles the shopper gets by choosing it,
+ * counted with the rest of the current filters applied.
+ */
+export type Facet = { value: string; count: number };
 
-export async function getShopProducts(
-  filters: ShopFilters = {},
-): Promise<CardProduct[]> {
-  // Collection and size filters live on other tables, so resolve them to a set
-  // of product ids first rather than forcing a join into the relational query.
-  let restrictTo: string[] | null = null;
+export type ShopListing = {
+  items: CardProduct[];
+  categories: Facet[];
+  sizes: Facet[];
+  prices: { id: PriceBandId; label: string; count: number }[];
+  inStockCount: number;
+  /** Articles in scope before any facet is applied — what "Clear all" returns. */
+  total: number;
+};
 
-  if (filters.collectionSlug) {
+/*
+ * The listing filters, sorts and counts in memory over one query for the
+ * catalog in scope, rather than pushing each facet into SQL.
+ *
+ * That is what makes honest facet counts affordable: a count per value needs
+ * the result set recomputed with that value's own group lifted, which is four
+ * more round trips in SQL and four array passes here. It also drops the
+ * product-id round trips the size and collection facets used to need.
+ *
+ * ponytail: whole active catalog into memory per request. It was already
+ * unpaginated, so this adds counting, not a new ceiling. Push the predicates
+ * back into SQL when the catalog outgrows a few thousand articles — the
+ * matcher table below is the spec to port.
+ */
+
+/** A card plus the text search runs over, folded once at load. */
+export type SearchableCard = CardProduct & { search: string };
+
+async function getCatalogCards(
+  collectionSlug?: string,
+): Promise<SearchableCard[]> {
+  const conditions = [eq(products.status, "active")];
+
+  if (collectionSlug) {
     const ids = await db
       .select({ id: productCollections.productId })
       .from(productCollections)
       .innerJoin(collections, eq(productCollections.collectionId, collections.id))
-      .where(eq(collections.slug, filters.collectionSlug));
-    restrictTo = ids.map((r) => r.id);
-  }
-
-  if (filters.size) {
-    const ids = await db
-      .select({ id: variants.productId })
-      .from(variants)
-      .where(
-        filters.inStockOnly
-          ? and(eq(variants.size, filters.size), gt(variants.stock, 0))
-          : eq(variants.size, filters.size),
-      );
-    const sizeIds = ids.map((r) => r.id);
-    restrictTo = restrictTo
-      ? restrictTo.filter((id) => sizeIds.includes(id))
-      : sizeIds;
-  }
-
-  if (restrictTo !== null && restrictTo.length === 0) return [];
-
-  const conditions = [eq(products.status, "active")];
-  if (restrictTo) conditions.push(inArray(products.id, restrictTo));
-  if (filters.category) conditions.push(eq(products.category, filters.category));
-
-  // Half-open [min, max) so a product priced exactly at an edge lands in the
-  // upper band only, and no product can match two bands at once.
-  const band = PRICE_BANDS.find((b) => b.id === filters.price);
-  if (band) {
-    conditions.push(gte(products.price, band.min));
-    if (band.max !== null) conditions.push(lt(products.price, band.max));
-  }
-
-  const query = filters.q?.trim();
-  if (query) {
-    const pattern = `%${escapeLike(query)}%`;
-    conditions.push(
-      or(
-        ilike(products.title, pattern),
-        ilike(products.description, pattern),
-        ilike(products.category, pattern),
-      )!,
-    );
+      .where(eq(collections.slug, collectionSlug));
+    if (ids.length === 0) return [];
+    conditions.push(inArray(products.id, ids.map((r) => r.id)));
   }
 
   const rows = await db.query.products.findMany({
-    columns: cardColumns,
+    columns: { ...cardColumns, description: true },
     with: cardWith,
     where: and(...conditions),
-    orderBy:
-      filters.sort === "price-asc"
-        ? asc(products.price)
-        : filters.sort === "price-desc"
-          ? desc(products.price)
-          : desc(products.createdAt),
+    orderBy: desc(products.createdAt),
   });
 
-  const cards = rows.map(toCard);
+  return rows.map((row) => ({
+    ...toCard(row),
+    // Slug carries the SKU, which is what the header search box invites.
+    search: [row.title, row.description, row.category, row.slug]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase(),
+  }));
+}
 
-  // `inStockOnly` without a size means "has stock in any size".
-  return filters.inStockOnly && !filters.size
-    ? cards.filter((card) => card.totalStock > 0)
-    : cards;
+/** Does this product come in `size`, in stock if the shopper asked for that? */
+function hasSize(card: CardProduct, size: string, inStockOnly: boolean): boolean {
+  return card.sizes.some(
+    (variant) =>
+      variant.size === size && (!inStockOnly || variant.stock > 0),
+  );
+}
+
+function inBand(card: CardProduct, price: PriceBandId | undefined): boolean {
+  const band = PRICE_BANDS.find((b) => b.id === price);
+  if (!band) return true;
+  // Half-open [min, max) so a product priced exactly at an edge lands in the
+  // upper band only, and no product can match two bands at once.
+  return card.price >= band.min && (band.max === null || card.price < band.max);
+}
+
+/**
+ * One predicate per facet group, keyed by group. Counting a group's values
+ * means running every matcher *except* that group's — the usual OR-within,
+ * AND-across facet rule — so they have to stay separable.
+ */
+const MATCHERS = {
+  category: (card: SearchableCard, f: ShopFilters) =>
+    !f.categories?.length ||
+    (card.category !== null && f.categories.includes(card.category)),
+
+  size: (card: SearchableCard, f: ShopFilters) =>
+    !f.sizes?.length ||
+    f.sizes.some((size) => hasSize(card, size, Boolean(f.inStockOnly))),
+
+  price: (card: SearchableCard, f: ShopFilters) => inBand(card, f.price),
+
+  // Coarse gate only. A size-specific stock check lives in the size matcher,
+  // which keeps this one independent of which sizes are selected.
+  stock: (card: SearchableCard, f: ShopFilters) =>
+    !f.inStockOnly || card.totalStock > 0,
+
+  q: (card: SearchableCard, f: ShopFilters) => {
+    const query = f.q?.trim().toLowerCase();
+    return !query || card.search.includes(query);
+  },
+} as const;
+
+type Group = keyof typeof MATCHERS;
+
+function apply(
+  cards: SearchableCard[],
+  filters: ShopFilters,
+  except?: Group,
+): SearchableCard[] {
+  const groups = (Object.keys(MATCHERS) as Group[]).filter((g) => g !== except);
+  return cards.filter((card) =>
+    groups.every((group) => MATCHERS[group](card, filters)),
+  );
+}
+
+function sortCards<T extends CardProduct>(cards: T[], sort: ShopFilters["sort"]): T[] {
+  if (sort === "price-asc") return [...cards].sort((a, b) => a.price - b.price);
+  if (sort === "price-desc") return [...cards].sort((a, b) => b.price - a.price);
+  return cards; // already newest-first from the query
+}
+
+export async function getShopListing(
+  filters: ShopFilters = {},
+): Promise<ShopListing> {
+  return buildListing(await getCatalogCards(filters.collectionSlug), filters);
+}
+
+/** The filtering and counting, split from the query so it can be tested. */
+export function buildListing(
+  cards: SearchableCard[],
+  filters: ShopFilters = {},
+): ShopListing {
+  // Facet values come from the catalog in scope, not the whole site — a
+  // collection of two articles must not offer the seven sizes the site sells.
+  const categoryValues = [
+    ...new Set(cards.map((c) => c.category).filter((c): c is string => Boolean(c))),
+  ].sort();
+  const sizeValues = orderSizes([
+    ...new Set(cards.flatMap((c) => c.sizes.map((v) => v.size))),
+  ]);
+
+  const forCategory = apply(cards, filters, "category");
+  const forSize = apply(cards, filters, "size");
+  const forPrice = apply(cards, filters, "price");
+  const forStock = apply(cards, filters, "stock");
+
+  return {
+    items: sortCards(apply(cards, filters), filters.sort),
+    total: cards.length,
+    categories: categoryValues.map((value) => ({
+      value,
+      count: forCategory.filter((c) => c.category === value).length,
+    })),
+    sizes: sizeValues.map((value) => ({
+      value,
+      count: forSize.filter((c) =>
+        hasSize(c, value, Boolean(filters.inStockOnly)),
+      ).length,
+    })),
+    prices: PRICE_BANDS.map((band) => ({
+      id: band.id,
+      label: band.label,
+      count: forPrice.filter((c) => inBand(c, band.id)).length,
+    })),
+    inStockCount: forStock.filter((c) => c.totalStock > 0).length,
+  };
+}
+
+/** Kept for the homepage, which wants products and no facets. */
+export async function getShopProducts(
+  filters: ShopFilters = {},
+): Promise<CardProduct[]> {
+  return (await getShopListing(filters)).items;
 }
 
 export async function getProductBySlug(slug: string) {
@@ -257,49 +342,31 @@ export async function getCollectionBySlug(slug: string) {
   return db.query.collections.findFirst({ where: eq(collections.slug, slug) });
 }
 
-/** Distinct categories that have at least one active product. */
-export async function getCategories(): Promise<string[]> {
-  const rows = await db
-    .selectDistinct({ category: products.category })
-    .from(products)
-    .where(eq(products.status, "active"))
-    .orderBy(asc(products.category));
+/**
+ * Sizes the way clothing is sized, not the way the alphabet is. Covers both
+ * spellings; "One Size" sorts last, after every numbered size.
+ */
+const SIZE_ORDER = [
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "2XL",
+  "XXL",
+  "3XL",
+  "XXXL",
+  "4XL",
+  "One Size",
+];
 
-  return rows
-    .map((r) => r.category)
-    .filter((c): c is string => Boolean(c));
-}
-
-/** Distinct sizes across active products, ordered the way clothing is sized. */
-export async function getSizes(): Promise<string[]> {
-  const rows = await db
-    .selectDistinct({ size: variants.size })
-    .from(variants)
-    .innerJoin(products, eq(variants.productId, products.id))
-    .where(eq(products.status, "active"));
-
-  // Covers both spellings; "One Size" sorts last, after every numbered size.
-  const ORDER = [
-    "XS",
-    "S",
-    "M",
-    "L",
-    "XL",
-    "2XL",
-    "XXL",
-    "3XL",
-    "XXXL",
-    "4XL",
-    "One Size",
-  ];
-  return rows
-    .map((r) => r.size)
-    .sort((a, b) => {
-      const ai = ORDER.indexOf(a);
-      const bi = ORDER.indexOf(b);
-      if (ai === -1 && bi === -1) return a.localeCompare(b);
-      if (ai === -1) return 1;
-      if (bi === -1) return -1;
-      return ai - bi;
-    });
+function orderSizes(sizes: string[]): string[] {
+  return [...sizes].sort((a, b) => {
+    const ai = SIZE_ORDER.indexOf(a);
+    const bi = SIZE_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
 }
