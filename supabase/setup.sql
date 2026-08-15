@@ -60,6 +60,19 @@ begin
   end loop;
 end $$;
 
+-- The app reads `profiles` via Drizzle (the `postgres` role), which bypasses
+-- RLS entirely, so section 2 above deliberately leaves it with zero policies.
+-- But the storage policy below checks admin status with a subquery that runs
+-- as the `authenticated` role, and that role could not read `profiles` at
+-- all — not even its own row — so the check always saw zero rows and every
+-- upload failed regardless of actual role. Scoped to the caller's own row
+-- only: this does not reopen `profiles` to PostgREST generally.
+drop policy if exists "profiles_self_read" on public.profiles;
+create policy "profiles_self_read"
+  on public.profiles for select
+  to authenticated
+  using (user_id = auth.uid());
+
 -- ===========================================================================
 -- 3. Media bucket for product / article / lookbook images
 -- ===========================================================================
