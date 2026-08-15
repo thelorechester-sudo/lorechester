@@ -50,6 +50,23 @@ export function ImageManager({
 
     setBusy(true);
     const supabase = createClient();
+
+    /*
+     * Uploads go straight from the browser to Storage, bypassing every
+     * server-side auth check this app has — the RLS policy below is the only
+     * gate. A session that is present but expired sends the request with no
+     * usable token, and Postgres then rejects it as if signed out entirely:
+     * "new row violates row-level security policy", with nothing pointing at
+     * the real cause. Refreshing first turns that silent failure into an
+     * explicit one.
+     */
+    const { error: sessionError } = await supabase.auth.refreshSession();
+    if (sessionError) {
+      setError("Your session has expired. Refresh the page and sign in again.");
+      setBusy(false);
+      return;
+    }
+
     const uploaded: ManagedImage[] = [];
 
     for (const file of picked) {
