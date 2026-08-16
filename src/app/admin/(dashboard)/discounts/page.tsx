@@ -2,6 +2,7 @@ import { desc } from "drizzle-orm";
 import Link from "next/link";
 
 import { Badge, Button, EmptyState, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { discounts } from "@/lib/db/schema";
 import { formatIDR } from "@/lib/money";
@@ -10,6 +11,8 @@ import { DeleteDiscountButton } from "./delete-button";
 export default async function DiscountsPage({
   searchParams,
 }: PageProps<"/admin/discounts">) {
+  await requireAdmin();
+
   const { saved } = await searchParams;
   const rows = await db
     .select()

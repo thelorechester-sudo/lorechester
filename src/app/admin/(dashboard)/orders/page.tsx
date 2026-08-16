@@ -2,6 +2,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 
 import { Badge, EmptyState, PageHeader, cx } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders, type OrderStatus } from "@/lib/db/schema";
 import { formatIDR } from "@/lib/money";
@@ -27,6 +28,8 @@ const FILTERS = [
 export default async function OrdersPage({
   searchParams,
 }: PageProps<"/admin/orders">) {
+  await requireAdmin();
+
   const { status } = await searchParams;
   const active = typeof status === "string" ? status : "all";
 

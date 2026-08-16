@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { collections } from "@/lib/db/schema";
 import { CollectionForm, type CollectionFormValues } from "../collection-form";
@@ -15,6 +16,8 @@ function toLocalInputValue(date: Date): string {
 export default async function EditCollectionPage({
   params,
 }: PageProps<"/admin/collections/[id]">) {
+  await requireAdmin();
+
   const { id } = await params;
 
   const [collection, allProducts] = await Promise.all([

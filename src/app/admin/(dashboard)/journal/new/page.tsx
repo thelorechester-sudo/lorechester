@@ -1,7 +1,10 @@
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { ArticleForm, EMPTY_ARTICLE } from "../article-form";
 
-export default function NewArticlePage() {
+export default async function NewArticlePage() {
+  await requireAdmin();
+
   return (
     <>
       <PageHeader

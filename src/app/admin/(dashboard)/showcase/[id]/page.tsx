@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { showcases } from "@/lib/db/schema";
 import { ShowcaseForm, type ShowcaseFormValues } from "../showcase-form";
@@ -9,6 +10,8 @@ import { ShowcaseForm, type ShowcaseFormValues } from "../showcase-form";
 export default async function EditShowcasePage({
   params,
 }: PageProps<"/admin/showcase/[id]">) {
+  await requireAdmin();
+
   const { id } = await params;
 
   const [[showcase], allProducts] = await Promise.all([

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Badge, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { formatIDR } from "@/lib/money";
@@ -13,6 +14,8 @@ import { FulfilPanel } from "./fulfil-panel";
 export default async function AdminOrderPage({
   params,
 }: PageProps<"/admin/orders/[id]">) {
+  await requireAdmin();
+
   const { id } = await params;
 
   const order = await db.query.orders.findFirst({

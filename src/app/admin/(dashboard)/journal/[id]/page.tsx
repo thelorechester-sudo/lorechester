@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { articles } from "@/lib/db/schema";
 import { ArticleForm, type ArticleFormValues } from "../article-form";
@@ -10,6 +11,8 @@ import { ArticleForm, type ArticleFormValues } from "../article-form";
 export default async function EditArticlePage({
   params,
 }: PageProps<"/admin/journal/[id]">) {
+  await requireAdmin();
+
   const { id } = await params;
 
   const [article] = await db

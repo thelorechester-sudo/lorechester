@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Badge, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { products, variants } from "@/lib/db/schema";
 import { formatIDR } from "@/lib/money";
@@ -49,6 +50,8 @@ function Stat({
 }
 
 export default async function AdminOverviewPage() {
+  await requireAdmin();
+
   const [counts] = await db
     .select({
       total: sql<number>`count(*)::int`,

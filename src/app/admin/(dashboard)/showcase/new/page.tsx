@@ -1,10 +1,13 @@
 import { asc } from "drizzle-orm";
 
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { EMPTY_SHOWCASE, ShowcaseForm } from "../showcase-form";
 
 export default async function NewShowcasePage() {
+  await requireAdmin();
+
   const allProducts = await db.query.products.findMany({
     columns: { id: true, title: true, status: true },
     orderBy: (p) => asc(p.title),

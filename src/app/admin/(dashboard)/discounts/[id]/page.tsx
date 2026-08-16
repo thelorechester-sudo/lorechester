@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { discounts } from "@/lib/db/schema";
 import { DiscountForm, type DiscountFormValues } from "../discount-form";
@@ -14,6 +15,8 @@ function toLocalInputValue(date: Date): string {
 export default async function EditDiscountPage({
   params,
 }: PageProps<"/admin/discounts/[id]">) {
+  await requireAdmin();
+
   const { id } = await params;
 
   const [discount] = await db

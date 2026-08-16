@@ -1,10 +1,13 @@
 import { asc } from "drizzle-orm";
 
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CollectionForm, EMPTY_COLLECTION } from "../collection-form";
 
 export default async function NewCollectionPage() {
+  await requireAdmin();
+
   const allProducts = await db.query.products.findMany({
     columns: { id: true, title: true, status: true },
     orderBy: (p) => asc(p.title),

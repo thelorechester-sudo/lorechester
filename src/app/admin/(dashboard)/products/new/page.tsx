@@ -1,7 +1,10 @@
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { EMPTY_PRODUCT, ProductForm } from "../product-form";
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  await requireAdmin();
+
   return (
     <>
       <PageHeader

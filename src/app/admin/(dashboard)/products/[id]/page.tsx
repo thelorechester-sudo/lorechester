@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { ProductForm, type ProductFormValues } from "../product-form";
@@ -10,6 +11,8 @@ import { ProductForm, type ProductFormValues } from "../product-form";
 export default async function EditProductPage({
   params,
 }: PageProps<"/admin/products/[id]">) {
+  await requireAdmin();
+
   const { id } = await params;
 
   const product = await db.query.products.findFirst({

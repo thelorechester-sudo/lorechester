@@ -2,6 +2,7 @@ import { desc } from "drizzle-orm";
 import Link from "next/link";
 
 import { Badge, Button, EmptyState, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { articles } from "@/lib/db/schema";
 import { DeleteArticleButton } from "./delete-button";
@@ -9,6 +10,8 @@ import { DeleteArticleButton } from "./delete-button";
 export default async function JournalPage({
   searchParams,
 }: PageProps<"/admin/journal">) {
+  await requireAdmin();
+
   const { saved } = await searchParams;
   const rows = await db.select().from(articles).orderBy(desc(articles.createdAt));
 

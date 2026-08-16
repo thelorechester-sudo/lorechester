@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Badge, Button, EmptyState, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatIDR } from "@/lib/money";
 import { DeleteProductButton } from "./delete-button";
@@ -16,6 +17,8 @@ const STATUS_TONE = {
 export default async function ProductsPage({
   searchParams,
 }: PageProps<"/admin/products">) {
+  await requireAdmin();
+
   const { saved } = await searchParams;
 
   const rows = await db.query.products.findMany({

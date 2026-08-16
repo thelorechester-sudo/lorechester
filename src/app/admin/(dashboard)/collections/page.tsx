@@ -2,12 +2,15 @@ import { desc } from "drizzle-orm";
 import Link from "next/link";
 
 import { Badge, Button, EmptyState, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DeleteCollectionButton } from "./delete-button";
 
 export default async function CollectionsPage({
   searchParams,
 }: PageProps<"/admin/collections">) {
+  await requireAdmin();
+
   const { saved } = await searchParams;
 
   const rows = await db.query.collections.findMany({

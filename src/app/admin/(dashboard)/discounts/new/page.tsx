@@ -1,7 +1,10 @@
 import { PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { DiscountForm, EMPTY_DISCOUNT } from "../discount-form";
 
-export default function NewDiscountPage() {
+export default async function NewDiscountPage() {
+  await requireAdmin();
+
   return (
     <>
       <PageHeader

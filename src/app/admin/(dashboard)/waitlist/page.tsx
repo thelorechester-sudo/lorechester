@@ -2,11 +2,14 @@ import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 
 import { Badge, EmptyState, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { products, variants, waitlist } from "@/lib/db/schema";
 import { NotifyButton } from "./notify-button";
 
 export default async function WaitlistPage() {
+  await requireAdmin();
+
   // Grouped by product so the "back in stock" blast has an obvious target.
   const groups = await db
     .select({

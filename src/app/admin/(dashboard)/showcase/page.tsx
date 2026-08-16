@@ -2,6 +2,7 @@ import { asc, desc } from "drizzle-orm";
 import Link from "next/link";
 
 import { Badge, Button, EmptyState, PageHeader } from "@/components/admin/ui";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { showcases } from "@/lib/db/schema";
 import { DeleteShowcaseButton } from "./delete-button";
@@ -9,6 +10,8 @@ import { DeleteShowcaseButton } from "./delete-button";
 export default async function ShowcasePage({
   searchParams,
 }: PageProps<"/admin/showcase">) {
+  await requireAdmin();
+
   const { saved } = await searchParams;
 
   const rows = await db
