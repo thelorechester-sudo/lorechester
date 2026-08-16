@@ -19,11 +19,13 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
   const collections = await getCollections();
 
   const links: NavLink[] = [
+    { href: "/", label: "Home" },
     { href: "/shop", label: "Shop" },
-    // Newest drop gets its own top-level entry; the rest live under /shop.
+    // Newest drop gets its own top-level entry; the rest live under /shop. It
+    // is labelled generically so the nav does not change width every drop.
     ...collections.slice(0, 1).map((collection) => ({
       href: `/shop/${collection.slug}`,
-      label: collection.title,
+      label: "Collection",
     })),
     { href: "/journal", label: "Journal" },
     { href: "/about", label: "About" },
