@@ -3,6 +3,7 @@ import Script from "next/script";
 
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
 import { clientKey, snapScriptUrl } from "@/lib/midtrans";
+import { isShippingConfigured } from "@/lib/shipping";
 import { CheckoutForm } from "./checkout-form";
 
 export const metadata: Metadata = {
@@ -30,7 +31,10 @@ export default function CheckoutPage() {
         </p>
       )}
 
-      <CheckoutForm freeShippingThreshold={FREE_SHIPPING_THRESHOLD} />
+      <CheckoutForm
+        freeShippingThreshold={FREE_SHIPPING_THRESHOLD}
+        shippingConfigured={isShippingConfigured()}
+      />
     </>
   );
 }

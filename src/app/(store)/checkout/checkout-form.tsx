@@ -84,8 +84,18 @@ function PayButton({ total }: { total: number }) {
 
 export function CheckoutForm({
   freeShippingThreshold,
+  shippingConfigured,
 }: {
   freeShippingThreshold: number;
+  /**
+   * False in local/demo setups with no Biteship account. Courier rate
+   * lookups fall back to a flat price either way (see lib/shipping.ts), but
+   * that fallback still needs *some* area to quote against — so without a
+   * real account to search against, the typed district stands in directly
+   * rather than requiring a pick from an autocomplete that can never return
+   * results.
+   */
+  shippingConfigured: boolean;
 }) {
   const router = useRouter();
   const { items, hydrated, clear } = useCart();
@@ -135,8 +145,10 @@ export function CheckoutForm({
   // Derived, not stored — see the same note in cart-drawer.tsx.
   const cart = items.length === 0 ? EMPTY_CART : priced;
 
-  /* Area autocomplete, debounced ------------------------------------------ */
-  const canSearchArea = area === null && areaQuery.trim().length >= 3;
+  /* Area autocomplete, debounced — only meaningful with a real account to
+     search against; see the shippingConfigured prop doc above. */
+  const canSearchArea =
+    shippingConfigured && area === null && areaQuery.trim().length >= 3;
 
   useEffect(() => {
     if (!canSearchArea) return;
@@ -152,15 +164,25 @@ export function CheckoutForm({
   // without a second render to empty them out.
   const areaResults = canSearchArea ? fetchedAreas : [];
 
+  // The typed district stands in directly when there is no account to
+  // validate it against — the flat-rate fallback never inspects area.id.
+  const effectiveArea: ShippingArea | null = shippingConfigured
+    ? area
+    : areaQuery.trim()
+      ? { id: "manual", name: areaQuery.trim(), postalCode: form.postalCode }
+      : null;
+
   /* Courier rates, refreshed whenever the destination or bag changes ------ */
   const canQuote =
-    area !== null && /^\d{5}$/.test(form.postalCode) && items.length > 0;
+    effectiveArea !== null &&
+    /^\d{5}$/.test(form.postalCode) &&
+    items.length > 0;
 
   useEffect(() => {
-    if (!canQuote) return;
+    if (!canQuote || !effectiveArea) return;
 
     let cancelled = false;
-    const areaId = area.id;
+    const areaId = effectiveArea.id;
     const postalCode = form.postalCode;
 
     startShippingTransition(async () => {
@@ -180,7 +202,12 @@ export function CheckoutForm({
     return () => {
       cancelled = true;
     };
-  }, [canQuote, area, form.postalCode, items]);
+    // effectiveArea is a fresh object every render in manual mode (no
+    // shippingConfigured), and quoteShipping returns a fresh array on every
+    // call — depending on the object itself would refire this on every
+    // render, forever. areaId/name is everything the request actually uses.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canQuote, effectiveArea?.id, effectiveArea?.name, form.postalCode, items]);
 
   // Derived: an incomplete address has no options, rather than stale ones
   // hanging around until an effect clears them.
@@ -229,8 +256,8 @@ export function CheckoutForm({
 
   const payload = JSON.stringify({
     ...form,
-    areaId: area?.id ?? "",
-    areaLabel: area?.name ?? "",
+    areaId: effectiveArea?.id ?? "",
+    areaLabel: effectiveArea?.name ?? "",
     shippingOptionKey: optionKey,
     discountCode: applied?.code,
     items,
@@ -347,9 +374,13 @@ export function CheckoutForm({
             label="District"
             htmlFor="area"
             error={errors.areaId}
-            hint="Type your kecamatan or kelurahan and pick from the list."
+            hint={
+              shippingConfigured
+                ? "Type your kecamatan or kelurahan and pick from the list."
+                : "Kecamatan or kelurahan."
+            }
           >
-            {area ? (
+            {shippingConfigured && area ? (
               <div className="flex items-center justify-between gap-3 border border-ink bg-paper px-3 py-2.5">
                 <span className="text-sm">{area.name}</span>
                 <button
@@ -373,10 +404,10 @@ export function CheckoutForm({
                   onChange={(e) => setAreaQuery(e.target.value)}
                   autoComplete="off"
                 />
-                {areaLoading && (
+                {shippingConfigured && areaLoading && (
                   <p className="mt-1 text-xs text-muted">Searching…</p>
                 )}
-                {areaResults.length > 0 && (
+                {shippingConfigured && areaResults.length > 0 && (
                   <ul className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto border border-line bg-paper-pure shadow-lg">
                     {areaResults.map((result) => (
                       <li key={result.id}>
@@ -441,7 +472,7 @@ export function CheckoutForm({
         <section className="space-y-4">
           <h2 className="meta border-b border-line pb-2">3 — Shipping</h2>
 
-          {!area || !/^\d{5}$/.test(form.postalCode) ? (
+          {!effectiveArea || !/^\d{5}$/.test(form.postalCode) ? (
             <p className="text-sm text-muted">
               Choose your district and postal code to see courier options.
             </p>
