@@ -21,12 +21,11 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
   const links: NavLink[] = [
     { href: "/", label: "Home" },
     { href: "/shop", label: "Shop" },
-    // Newest drop gets its own top-level entry; the rest live under /shop. It
-    // is labelled generically so the nav does not change width every drop.
-    ...collections.slice(0, 1).map((collection) => ({
-      href: `/shop/${collection.slug}`,
-      label: "Collection",
-    })),
+    // Every admin-managed collection is reachable from /collections. Hidden
+    // entirely when there are none, so the nav never points at an empty page.
+    ...(collections.length > 0
+      ? [{ href: "/collections", label: "Collection" }]
+      : []),
     { href: "/journal", label: "Journal" },
     { href: "/about", label: "About" },
   ];
