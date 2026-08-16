@@ -15,7 +15,9 @@ import {
 } from "@/app/actions/checkout";
 import { getCartLines } from "@/app/actions/cart";
 import { useCart } from "@/components/store/cart-store";
+import { RegionSelect } from "@/components/store/region-select";
 import { EMPTY_CART, type PricedCart } from "@/lib/cart-types";
+import { PROVINCES, REGENCIES_BY_PROVINCE, type Region } from "@/lib/indonesia-regions";
 import { formatIDR } from "@/lib/money";
 import type { ShippingArea, ShippingOption } from "@/lib/shipping";
 
@@ -107,6 +109,10 @@ export function CheckoutForm({
   const [priced, setCart] = useState<PricedCart>(EMPTY_CART);
   const [, startCartTransition] = useTransition();
 
+  const [province, setProvince] = useState<Region | null>(null);
+  const [city, setCity] = useState<Region | null>(null);
+  const cityOptions = province ? (REGENCIES_BY_PROVINCE[province.id] ?? []) : [];
+
   const [form, setForm] = useState({
     email: "",
     phone: "",
@@ -164,17 +170,27 @@ export function CheckoutForm({
   // without a second render to empty them out.
   const areaResults = canSearchArea ? fetchedAreas : [];
 
-  // The typed district stands in directly when there is no account to
-  // validate it against — the flat-rate fallback never inspects area.id.
+  // Province and city are always collected — a real address needs them
+  // regardless of whether Biteship can price it — but only get folded into
+  // the label here when there is no account to validate a district against.
+  // Biteship's own search result already carries the full "District, City,
+  // Province" hierarchy in its name, matching the shape documented on
+  // ShippingAddress.areaLabel in db/schema.ts.
   const effectiveArea: ShippingArea | null = shippingConfigured
     ? area
-    : areaQuery.trim()
-      ? { id: "manual", name: areaQuery.trim(), postalCode: form.postalCode }
+    : areaQuery.trim() && province && city
+      ? {
+          id: "manual",
+          name: `${areaQuery.trim()}, ${city.name}, ${province.name}`,
+          postalCode: form.postalCode,
+        }
       : null;
 
   /* Courier rates, refreshed whenever the destination or bag changes ------ */
   const canQuote =
     effectiveArea !== null &&
+    province !== null &&
+    city !== null &&
     /^\d{5}$/.test(form.postalCode) &&
     items.length > 0;
 
@@ -370,6 +386,28 @@ export function CheckoutForm({
             />
           </Row>
 
+          <RegionSelect
+            id="province"
+            label="Province"
+            placeholder="Select province"
+            options={PROVINCES}
+            value={province}
+            onChange={(next) => {
+              setProvince(next);
+              setCity(null);
+            }}
+          />
+
+          <RegionSelect
+            id="city"
+            label="City / Regency"
+            placeholder="Select city or regency"
+            disabledHint="Select a province first"
+            options={cityOptions}
+            value={city}
+            onChange={setCity}
+          />
+
           <Row
             label="District"
             htmlFor="area"
@@ -474,7 +512,8 @@ export function CheckoutForm({
 
           {!effectiveArea || !/^\d{5}$/.test(form.postalCode) ? (
             <p className="text-sm text-muted">
-              Choose your district and postal code to see courier options.
+              Fill in your province, city, district and postal code to see
+              courier options.
             </p>
           ) : shippingLoading ? (
             <p className="text-sm text-muted">Getting courier rates…</p>
