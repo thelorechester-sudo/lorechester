@@ -39,6 +39,13 @@ export const variantInput = z.object({
   color: z.string().max(40).nullish(),
   sku: z.string().max(60).nullish(),
   stock: z.number().int().min(0, "Stock cannot be negative").max(100_000),
+  /*
+   * Stock as the edit form was rendered with it. `stock` is what the admin
+   * wants it to be; the difference between the two is what they actually
+   * changed, and that delta is what gets applied. Absent for new variants and
+   * for any caller that never read a prior value.
+   */
+  stockAt: z.number().int().min(0).max(100_000).optional(),
   priceOverride: rupiah.nullish(),
   position: z.number().int().min(0).default(0),
 });

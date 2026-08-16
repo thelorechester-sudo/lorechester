@@ -8,8 +8,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import { DEMO_MODE } from "@/lib/demo";
-import { requireEnv } from "@/lib/env";
+import { isLocalDatabase, requireEnv } from "@/lib/env";
 import * as schema from "./schema";
 
 /**
@@ -141,7 +140,14 @@ function createRemoteDb(): PostgresJsDatabase<typeof schema> {
 function resolveDb(): PostgresJsDatabase<typeof schema> {
   if (globalForDb.__lorechesterDb) return globalForDb.__lorechesterDb;
 
-  const created = DEMO_MODE ? createLocalDb() : createRemoteDb();
+  /*
+   * `isLocalDatabase()` and not bare `DEMO_MODE`: it carries the same
+   * NODE_ENV !== "production" gate as requireAdmin and proxy.ts. Without it a
+   * production deploy carrying the flag would route every read and write to
+   * per-instance WASM that is wiped on cold start — orders taken in that
+   * window disappear, and their webhooks settle against an unknown order.
+   */
+  const created = isLocalDatabase() ? createLocalDb() : createRemoteDb();
   // Cached on globalThis so a dev hot-reload reuses the same instance rather
   // than opening a second handle on the same PGlite directory.
   if (process.env.NODE_ENV !== "production") {

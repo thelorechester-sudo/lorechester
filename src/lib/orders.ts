@@ -100,3 +100,24 @@ export async function claimDiscountUse(
 
   return result.length > 0;
 }
+
+/**
+ * Hand back a use claimed by an order that will never be paid — a Snap
+ * failure, an expiry, or a cancellation.
+ *
+ * The claim happens when the order is created, so that a code with
+ * `usageLimit` cannot be redeemed by everyone who reaches checkout inside the
+ * payment window. The cost of claiming early is that an abandoned checkout
+ * holds a use until Midtrans expires it; this is what gives it back.
+ *
+ * Floored at zero so a double release can never mint uses.
+ */
+export async function releaseDiscountUse(
+  code: string,
+  tx: Pick<typeof db, "update"> = db,
+): Promise<void> {
+  await tx
+    .update(discounts)
+    .set({ usedCount: sql`greatest(${discounts.usedCount} - 1, 0)` })
+    .where(eq(discounts.code, code.toUpperCase()));
+}

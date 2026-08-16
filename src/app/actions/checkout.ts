@@ -13,7 +13,12 @@ import { optionalEnv } from "@/lib/env";
 import { createSnapTransaction } from "@/lib/midtrans";
 import { notifyOrderPlaced } from "@/lib/notify";
 import { normalizeIndonesianPhone } from "@/lib/phone";
-import { checkDiscountCode, generateOrderNumber } from "@/lib/orders";
+import {
+  checkDiscountCode,
+  claimDiscountUse,
+  generateOrderNumber,
+  releaseDiscountUse,
+} from "@/lib/orders";
 import { computeTotals, type DiscountRule } from "@/lib/pricing";
 import { getShippingOptions, priceShippingOption } from "@/lib/shipping";
 import { fieldErrors } from "@/lib/validation";
@@ -74,7 +79,8 @@ export async function quoteShipping(input: {
 /** Preview a discount code without committing to it. */
 export async function previewDiscount(code: string, items: unknown) {
   const parsedItems = cartItemsSchema.safeParse(items);
-  if (!parsedItems.success) return { ok: false as const, error: "Bag is empty." };
+  if (!parsedItems.success)
+    return { ok: false as const, error: "Bag is empty." };
 
   const cart = await priceCart(parsedItems.data);
   const check = await checkDiscountCode(code, cart.subtotal);
@@ -129,7 +135,10 @@ export async function createOrder(
   try {
     raw = JSON.parse(String(formData.get("payload") ?? ""));
   } catch {
-    return { ok: false, errors: { _form: "Could not read the checkout form." } };
+    return {
+      ok: false,
+      errors: { _form: "Could not read the checkout form." },
+    };
   }
 
   const parsed = checkoutSchema.safeParse(raw);
@@ -140,7 +149,9 @@ export async function createOrder(
   if (!phone) {
     return {
       ok: false,
-      errors: { phone: "Enter an Indonesian mobile number, e.g. 0812 3456 7890" },
+      errors: {
+        phone: "Enter an Indonesian mobile number, e.g. 0812 3456 7890",
+      },
     };
   }
 
@@ -218,50 +229,83 @@ export async function createOrder(
   const user = await getCurrentUser();
   const orderNumber = generateOrderNumber();
 
-  const [order] = await db.transaction(async (tx) => {
-    const [created] = await tx
-      .insert(orders)
-      .values({
-        orderNumber,
-        midtransOrderId: orderNumber,
-        email: input.email.toLowerCase().trim(),
-        phone,
-        customerId: user?.id ?? null,
-        status: "pending",
-        subtotal: totals.subtotal,
-        discountTotal: totals.discountTotal,
-        shippingTotal: totals.shippingTotal,
-        grandTotal: totals.grandTotal,
-        discountCode,
-        shippingAddress: {
-          recipientName: input.recipientName.trim(),
+  /*
+   * Thrown to roll the order back when the last use of a discount is taken by
+   * a concurrent checkout between checkDiscountCode and the claim.
+   */
+  class DiscountExhausted extends Error {}
+
+  let order;
+  try {
+    [order] = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(orders)
+        .values({
+          orderNumber,
+          midtransOrderId: orderNumber,
+          email: input.email.toLowerCase().trim(),
           phone,
-          line1: input.line1.trim(),
-          areaId: input.areaId,
-          areaLabel: input.areaLabel,
-          postalCode: input.postalCode,
-          note: input.note?.trim() || undefined,
-        },
-        courier: shipping.courierName,
-        courierService: shipping.serviceName,
-        note: input.note?.trim() || null,
-      })
-      .returning();
+          customerId: user?.id ?? null,
+          status: "pending",
+          subtotal: totals.subtotal,
+          discountTotal: totals.discountTotal,
+          shippingTotal: totals.shippingTotal,
+          grandTotal: totals.grandTotal,
+          discountCode,
+          shippingAddress: {
+            recipientName: input.recipientName.trim(),
+            phone,
+            line1: input.line1.trim(),
+            areaId: input.areaId,
+            areaLabel: input.areaLabel,
+            postalCode: input.postalCode,
+            note: input.note?.trim() || undefined,
+          },
+          courier: shipping.courierName,
+          courierService: shipping.serviceName,
+          note: input.note?.trim() || null,
+        })
+        .returning();
 
-    await tx.insert(orderItems).values(
-      cart.lines.map((line) => ({
-        orderId: created.id,
-        variantId: line.variantId,
-        titleSnapshot: line.title,
-        sizeSnapshot: line.size,
-        imageSnapshot: line.image,
-        priceSnapshot: line.unitPrice,
-        qty: line.fulfillableQty,
-      })),
-    );
+      await tx.insert(orderItems).values(
+        cart.lines.map((line) => ({
+          orderId: created.id,
+          variantId: line.variantId,
+          titleSnapshot: line.title,
+          sizeSnapshot: line.size,
+          imageSnapshot: line.image,
+          priceSnapshot: line.unitPrice,
+          qty: line.fulfillableQty,
+        })),
+      );
 
-    return [created];
-  });
+      /*
+       * Claim the discount here, not on settlement. checkDiscountCode above only
+       * reads usedCount, so claiming at payment time made usageLimit advisory:
+       * every customer who reached checkout inside the payment window passed the
+       * check and was honoured, and the ones over the limit produced a warning
+       * in the log after their money had already been taken.
+       *
+       * The claim's WHERE clause re-checks the limit atomically, so the race for
+       * a last use resolves here instead. Released again if this order never
+       * becomes payable — see releaseDiscountUse.
+       */
+      if (discountCode) {
+        const claimed = await claimDiscountUse(discountCode, tx);
+        if (!claimed) throw new DiscountExhausted();
+      }
+
+      return [created];
+    });
+  } catch (error) {
+    if (error instanceof DiscountExhausted) {
+      return {
+        ok: false,
+        errors: { discountCode: "That code has just been fully redeemed." },
+      };
+    }
+    throw error;
+  }
 
   /* 6. Snap token. -------------------------------------------------------- */
   try {
@@ -329,6 +373,10 @@ export async function createOrder(
       .update(orders)
       .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(orders.id, order.id));
+
+    // The use was claimed when the order row was written. This order can never
+    // settle, so hand it back rather than burning it on a failed Snap call.
+    if (discountCode) await releaseDiscountUse(discountCode);
 
     return {
       ok: false,

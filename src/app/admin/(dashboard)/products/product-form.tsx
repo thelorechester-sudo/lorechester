@@ -83,6 +83,21 @@ export function ProductForm({ initial }: { initial: ProductFormValues }) {
     ok: true,
   });
   const [values, setValues] = useState(initial);
+
+  /*
+   * Stock for each variant as this form was first rendered, captured once and
+   * never updated. saveProduct applies the difference between this and the
+   * submitted value, so a payment webhook that decremented the same variant
+   * while the form sat open is not silently overwritten.
+   */
+  const [stockAtLoad] = useState(
+    () =>
+      new Map(
+        initial.variants
+          .filter((variant) => variant.id)
+          .map((variant) => [variant.id!, variant.stock]),
+      ),
+  );
   const [slugTouched, setSlugTouched] = useState(Boolean(initial.slug));
 
   const errors = state.errors ?? {};
@@ -125,6 +140,7 @@ export function ProductForm({ initial }: { initial: ProductFormValues }) {
       color: variant.color || null,
       sku: variant.sku || null,
       stock: variant.stock,
+      stockAt: variant.id ? stockAtLoad.get(variant.id) : undefined,
       priceOverride: variant.priceOverride,
       position,
     })),

@@ -11,7 +11,7 @@ import {
 } from "@/lib/midtrans";
 import { formatIDR } from "@/lib/money";
 import { notifyOwner, notifyPaymentReceived } from "@/lib/notify";
-import { claimDiscountUse } from "@/lib/orders";
+import { releaseDiscountUse } from "@/lib/orders";
 
 /**
  * Midtrans payment notification.
@@ -92,17 +92,41 @@ export async function POST(request: NextRequest) {
     };
 
     if (outcome !== "paid") {
-      // Never walk an order backwards out of a fulfilled state.
-      if (["paid", "packed", "shipped", "delivered"].includes(locked.status)) {
+      /*
+       * Never walk an order backwards out of a state it has already reached.
+       * Fulfilled orders were always protected; dead ones were not, so a
+       * stale `pending` notification arriving after a cancellation put the
+       * order back into the admin's live list — and, now that the discount is
+       * released on death, would leave it released while the order looked
+       * live again.
+       */
+      const settled = ["paid", "packed", "shipped", "delivered"];
+      const dead = ["expired", "cancelled"];
+      if (settled.includes(locked.status) || dead.includes(locked.status)) {
         return;
       }
+
+      const status =
+        outcome === "pending"
+          ? "pending"
+          : outcome === "expired"
+            ? "expired"
+            : "cancelled";
+
       await tx
         .update(orders)
-        .set({
-          ...shared,
-          status: outcome === "pending" ? "pending" : outcome === "expired" ? "expired" : "cancelled",
-        })
+        .set({ ...shared, status })
         .where(eq(orders.id, locked.id));
+
+      /*
+       * Hand the discount use back. Claimed when the order was created, so an
+       * order that expires unpaid must not keep consuming a limited code. The
+       * guard above makes this run once: a retried expiry finds the order
+       * already dead and returns before reaching here.
+       */
+      if (dead.includes(status) && locked.discountCode) {
+        await releaseDiscountUse(locked.discountCode, tx);
+      }
       return;
     }
 
@@ -162,16 +186,9 @@ export async function POST(request: NextRequest) {
 
   /* 4. After-effects — never inside the transaction ------------------------ */
   if (didCommitStock) {
-    if (order.discountCode) {
-      // Best-effort: the customer already paid the discounted price, so a
-      // failed claim (limit reached in the meantime) is logged, not enforced.
-      const claimed = await claimDiscountUse(order.discountCode);
-      if (!claimed) {
-        console.warn(
-          `Discount ${order.discountCode} was over its limit when ${order.orderNumber} settled.`,
-        );
-      }
-    }
+    // The discount use was claimed when the order was created, so that
+    // usageLimit is enforced before money moves rather than counted after it.
+    // Nothing to claim here.
 
     const items = await db
       .select()

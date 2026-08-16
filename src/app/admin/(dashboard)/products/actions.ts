@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, eq, notInArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -111,7 +111,33 @@ export async function saveProduct(
         };
 
         if (variant.id) {
-          await tx.update(variants).set(values).where(eq(variants.id, variant.id));
+          /*
+           * Stock is applied as a delta, not as the absolute the form is
+           * holding. The payment webhook decrements this same column, so a
+           * form opened before a sale and saved after it would otherwise write
+           * the pre-sale count back and resell units already paid for — with
+           * no oversell warning, because the number looks healthy.
+           *
+           * `stockAt` is the count the form was rendered with. Editing 3 -> 10
+           * means "+7", and stays +7 even if a webhook took 2 in between.
+           * Clamped at 0 the same way the webhook clamps its decrement.
+           */
+          const delta =
+            variant.stockAt === undefined
+              ? undefined
+              : variant.stock - variant.stockAt;
+
+          await tx
+            .update(variants)
+            .set(
+              delta === undefined
+                ? values
+                : {
+                    ...values,
+                    stock: sql`greatest(${variants.stock} + ${delta}, 0)`,
+                  },
+            )
+            .where(eq(variants.id, variant.id));
         } else {
           await tx.insert(variants).values(values);
         }
