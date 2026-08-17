@@ -55,14 +55,23 @@ export function ProductGallery({
         </ul>
       )}
 
-      <div className="relative aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-card border border-line bg-paper-pure">
+      {/*
+       * Not `fill`. With fill + object-contain the img element box is the whole
+       * 4/5 frame and the photo is letterboxed inside it, so a radius on the
+       * image clips empty white and shows nothing. Explicit width/height only
+       * reserve space against layout shift; `h-auto w-auto` makes CSS use the
+       * file's natural size scaled to fit, which collapses the element box onto
+       * the photo itself — and that is what the radius can then round.
+       */}
+      <div className="flex aspect-[4/5] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-card border border-line bg-paper-pure p-6">
         <Image
           src={current.url}
           alt={current.alt || title}
-          fill
+          width={1200}
+          height={1500}
           priority
           sizes="(max-width: 1024px) 100vw, 560px"
-          className="object-contain p-6"
+          className="h-auto max-h-full w-auto max-w-full rounded-card object-contain"
         />
       </div>
     </div>
