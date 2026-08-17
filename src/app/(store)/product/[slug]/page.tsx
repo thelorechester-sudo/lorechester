@@ -107,11 +107,11 @@ export default async function ProductPage({
         <ProductGallery images={product.images} title={product.title} />
 
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <h1 className="text-3xl font-black uppercase leading-[0.95] tracking-[-0.04em]">
+          <h1 className="text-3xl font-semibold uppercase leading-[0.95] tracking-[-0.04em]">
             {product.title}
           </h1>
 
-          <p className="mt-4 flex items-baseline gap-3 font-mono">
+          <p className="mt-4 flex items-baseline gap-3 tabular-nums">
             <span className={"text-xl " + (onSale ? "text-accent" : "")}>
               {formatIDR(product.price)}
             </span>
@@ -168,7 +168,7 @@ export default async function ProductPage({
 
       {related.length > 0 && (
         <section className="mt-24">
-          <h2 className="mb-8 text-headline font-black uppercase">
+          <h2 className="mb-8 text-headline font-semibold uppercase">
             You might also like
           </h2>
           <ProductGrid>

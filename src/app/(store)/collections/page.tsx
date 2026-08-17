@@ -20,7 +20,7 @@ export default async function CollectionsPage() {
 
   return (
     <div className="mx-auto max-w-[1600px] px-5 py-10 sm:px-8">
-      <h1 className="text-headline font-black uppercase">Collections</h1>
+      <h1 className="text-headline font-semibold uppercase">Collections</h1>
       <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">
         Every drop, newest first. Once a run is gone, it&apos;s gone.
       </p>
@@ -52,7 +52,7 @@ export default async function CollectionsPage() {
                     )}
                   </div>
 
-                  <h2 className="mt-4 text-xl font-black uppercase leading-[0.95] tracking-[-0.03em]">
+                  <h2 className="mt-4 text-xl font-semibold uppercase leading-[0.95] tracking-[-0.03em]">
                     {collection.title}
                   </h2>
 

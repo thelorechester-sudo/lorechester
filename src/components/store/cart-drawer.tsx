@@ -95,7 +95,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
                   <Link
                     href={`/product/${line.slug}`}
                     onClick={close}
-                    className="relative aspect-[4/5] w-20 shrink-0 overflow-hidden bg-paper"
+                    className="relative aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-input bg-paper"
                   >
                     {line.image && (
                       <Image
@@ -134,7 +134,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
                     )}
 
                     <div className="mt-auto flex items-center justify-between pt-2">
-                      <div className="flex items-center border border-line">
+                      <div className="flex items-center rounded-input border border-line">
                         <button
                           type="button"
                           aria-label={`Decrease quantity of ${line.title}`}
@@ -157,7 +157,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
                         </button>
                       </div>
 
-                      <span className="font-mono text-sm">
+                      <span className="tabular-nums text-sm">
                         {formatIDR(line.unitPrice * line.qty)}
                       </span>
                     </div>
@@ -186,7 +186,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
 
               <div className="flex items-baseline justify-between">
                 <span className="meta text-muted">Subtotal</span>
-                <span className="font-mono text-lg">{formatIDR(cart.subtotal)}</span>
+                <span className="tabular-nums text-lg">{formatIDR(cart.subtotal)}</span>
               </div>
               <p className="mt-1 text-xs text-muted">
                 Shipping calculated at checkout.
@@ -197,7 +197,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
                 onClick={close}
                 aria-disabled={cart.subtotal === 0}
                 className={
-                  "mt-4 flex h-12 items-center justify-center bg-ink text-paper transition-colors hover:bg-ink-soft " +
+                  "mt-4 flex h-12 items-center justify-center rounded-button bg-ink text-paper transition-colors hover:bg-ink-soft " +
                   (cart.subtotal === 0 ? "pointer-events-none opacity-40" : "")
                 }
               >

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ReturnsPage() {
   return (
     <article className="mx-auto max-w-2xl px-5 py-20 sm:px-8">
-      <h1 className="text-headline font-black uppercase">
+      <h1 className="text-headline font-semibold uppercase">
         Returns &amp; exchanges
       </h1>
 
@@ -100,7 +100,7 @@ export default function ReturnsPage() {
           <p className="mt-3">
             Message <strong>[WHATSAPP NUMBER]</strong> or email{" "}
             <strong>[EMAIL]</strong> with your order number — it looks like{" "}
-            <span className="font-mono">LCTR-7K3M9QDX</span>. You can find it on
+            <span className="tabular-nums">LCTR-7K3M9QDX</span>. You can find it on
             your{" "}
             <Link href="/orders/lookup" className="text-ink underline">
               order page

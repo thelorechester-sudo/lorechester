@@ -26,7 +26,7 @@ export function ProductCard({
       <Link href={`/product/${product.slug}`} className="block">
         {/* Tall, quiet frame on white — the photograph carries the card, so the
             only chrome is a hairline and a slow zoom on hover. */}
-        <div className="relative aspect-[3/4] overflow-hidden border border-line bg-paper-pure">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-card border border-line bg-paper-pure">
           {product.image ? (
             <>
               <Image
@@ -108,7 +108,7 @@ export function ProductCard({
           <h3 className="text-sm font-medium leading-snug tracking-tight">
             {product.title}
           </h3>
-          <p className="flex shrink-0 items-baseline gap-2 font-mono text-xs">
+          <p className="flex shrink-0 items-baseline gap-2 tabular-nums text-xs">
             {onSale && (
               <span className="text-muted line-through">
                 {formatIDR(product.compareAtPrice!)}

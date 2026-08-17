@@ -3,38 +3,66 @@
 /* ==========================================================================
    Lorechester design tokens
    Change the brand here — nothing below hardcodes a hex value.
+
+   Values are taken from snsbworld.com's served stylesheet. The token *names*
+   are unchanged from the previous brand on purpose: ~600 utility usages across
+   the app reference them, so swapping the values re-skins everything without
+   touching a component.
    ========================================================================== */
 
 @theme {
   /* Palette --------------------------------------------------------------- */
-  --color-ink: #0b0b0c; /* near-black, all primary text and dark sections */
-  --color-ink-soft: #2a2a2d;
-  --color-paper: #faf9f6; /* warm off-white, the page ground */
+  --color-ink: #000000; /* pure black — all primary text and dark sections */
+  --color-ink-soft: #333333;
+  --color-paper: #ffffff; /* pure white ground, no warmth */
   --color-paper-pure: #ffffff;
-  --color-muted: #6e6e73; /* secondary copy, meta labels */
-  --color-line: #e3e1db; /* hairline rules and borders */
-  /* Oxblood, sampled from the CLASH DIVISION label artwork. */
-  --color-accent: #980000; /* sale, sold out, focus */
-  --color-accent-soft: #f7eaea;
+  --color-muted: #6b6b6b; /* secondary copy; 5.3:1 on white */
+  --color-line: #dfdfdf; /* hairline rules and borders */
+  --color-line-soft: #e6e6e6; /* the lighter of the reference's two borders */
+  --color-accent: #8b0000; /* sale, sold out, errors, focus; 9.6:1 on white */
+  --color-accent-soft: #f6eaea;
 
   /* Type ------------------------------------------------------------------ */
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono-brand), ui-monospace, monospace;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  /* The storefront has no monospace under this design — prices and order
+     numbers are set in the one family with tabular figures. This is kept for
+     the admin data tables, where order codes and CSV rows still need real
+     character alignment. System stack, so it costs no download. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Editorial display sizes. Tight tracking is the whole look — do not
-     loosen these without changing the brand. */
-  --text-display: clamp(2.5rem, 7vw, 6rem);
-  --text-display--line-height: 0.92;
-  --text-display--letter-spacing: -0.035em;
+  /* Display sizes, matching the reference's h1/h2 clamps. */
+  --text-display: clamp(3rem, 5.6vw, 3.5rem);
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.02em;
 
-  --text-headline: clamp(1.75rem, 3.5vw, 3rem);
-  --text-headline--line-height: 1;
-  --text-headline--letter-spacing: -0.025em;
+  --text-headline: clamp(2.25rem, 4.8vw, 3rem);
+  --text-headline--line-height: 1.1;
+  --text-headline--letter-spacing: -0.015em;
 
-  /* Small uppercase meta labels: nav, prices, sizes, badges. */
-  --text-meta: 0.6875rem;
+  /* The reference's scale, verbatim. */
+  --text-2xs: 0.625rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.875rem; /* body is 14px here, not 16px */
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+  --text-5xl: 3rem;
+  --text-6xl: 3.5rem;
+
+  /* Small uppercase labels: nav, prices, sizes, badges. No longer mono. */
+  --text-meta: 0.75rem;
   --text-meta--line-height: 1.2;
-  --text-meta--letter-spacing: 0.12em;
+  --text-meta--letter-spacing: 0.06em;
+
+  /* Shape ----------------------------------------------------------------- */
+  --radius-input: 4px;
+  --radius-card: 0.8rem;
+  --radius-button: 14px;
+  --radius-pill: 40px;
 
   /* Motion ---------------------------------------------------------------- */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -57,6 +85,20 @@
     background-color: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    font-size: var(--text-base); /* 14px, per the reference */
+    line-height: 1.6;
+  }
+
+  /*
+   * The one place the reference is not copied. It sets every field at 14px;
+   * iOS Safari zooms the viewport on focus for any input under 16px, which
+   * throws the customer out of the checkout layout mid-entry and does not
+   * zoom back out. Body copy stays 14px, fields do not.
+   */
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
   }
 
   /* Visible focus everywhere, on brand. Never remove without a replacement. */
@@ -88,9 +130,12 @@
    Utilities
    ========================================================================== */
 
+/* Small uppercase label. Was mono under the old brand; the reference has no
+   second face, so this is the one family at 500 with modest tracking. */
 @utility meta {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--text-meta);
+  font-weight: 500;
   line-height: var(--text-meta--line-height);
   letter-spacing: var(--text-meta--letter-spacing);
   text-transform: uppercase;

@@ -15,7 +15,7 @@ export function SetupRequired({ missing }: { missing: string[] }) {
     <main className="flex min-h-screen items-center justify-center bg-ink px-6 py-16 text-paper">
       <div className="w-full max-w-lg">
         <p className="meta text-paper/40">Lorechester</p>
-        <h1 className="mt-3 text-3xl font-black uppercase tracking-[-0.03em]">
+        <h1 className="mt-3 text-3xl font-semibold uppercase tracking-[-0.03em]">
           Not configured yet
         </h1>
 

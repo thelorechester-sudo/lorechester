@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function ShippingReturnsPage() {
   return (
     <article className="mx-auto max-w-2xl px-5 py-20 sm:px-8">
-      <h1 className="text-headline font-black uppercase">
+      <h1 className="text-headline font-semibold uppercase">
         Shipping &amp; returns
       </h1>
 

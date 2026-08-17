@@ -14,7 +14,7 @@ function Submit() {
     <button
       type="submit"
       disabled={pending}
-      className="flex h-12 w-full items-center justify-center bg-ink text-paper transition-colors hover:bg-ink-soft disabled:opacity-50"
+      className="flex h-12 w-full items-center justify-center rounded-button bg-ink text-paper transition-colors hover:bg-ink-soft disabled:opacity-50"
     >
       <span className="meta">{pending ? "Looking…" : "Find my order"}</span>
     </button>
@@ -52,7 +52,7 @@ export function LookupForm() {
           name="orderNumber"
           required
           placeholder="LRC-7K3M9QDX"
-          className={`${inputClass} font-mono uppercase`}
+          className={`${inputClass} tabular-nums uppercase`}
         />
       </div>
 

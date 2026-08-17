@@ -88,7 +88,7 @@ export function AddToCart({
                   setError(null);
                 }}
                 className={
-                  "min-w-14 border px-4 py-2.5 text-sm transition-colors " +
+                  "min-w-14 rounded-input border px-4 py-2.5 text-sm transition-colors " +
                   (soldOut
                     ? isSelected
                       ? "border-ink text-muted line-through"

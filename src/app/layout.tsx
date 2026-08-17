@@ -1,19 +1,19 @@
 import type { Metadata } from "next";
-import { Archivo, Roboto_Mono } from "next/font/google";
+import { Instrument_Sans } from "next/font/google";
 
 import { Analytics } from "@/components/analytics";
 import { siteUrl } from "@/lib/env";
 import "./globals.css";
 
-const archivo = Archivo({
-  variable: "--font-archivo",
+/*
+ * One family for everything, the way the reference sets it: 400 for body, 500
+ * for the small uppercase labels, 600 for headings. There is no second face —
+ * the mono that used to set meta labels is gone with the old brand.
+ */
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument",
   subsets: ["latin"],
-  axes: ["wdth"],
-});
-
-const mono = Roboto_Mono({
-  variable: "--font-mono-brand",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="id"
-      className={`${archivo.variable} ${mono.variable} h-full`}
+      className={`${instrumentSans.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
         {children}

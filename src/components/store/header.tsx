@@ -40,8 +40,12 @@ export function Header({ links }: { links: NavLink[] }) {
 
   /*
    * Light header on paper. The horizontal lockup asset is white-on-transparent
-   * so it can't be used here — the roundel (black with a red hub) plus the
-   * two-line LORE / CHESTER wordmark set in type is the lockup on light ground.
+   * so it can't be used here — the roundel plus the two-line LORE / CHESTER
+   * wordmark set in type is the lockup on light ground.
+   *
+   * The wordmark is now Instrument Sans 600 rather than Archivo Black. The
+   * roundel's red hub is the one colour on the page outside the black/white
+   * palette; swap to roundel-white.png on an ink header if that reads wrong.
    */
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-paper/90 text-ink backdrop-blur-md">
@@ -78,7 +82,7 @@ export function Header({ links }: { links: NavLink[] }) {
           />
           <span
             aria-hidden
-            className="text-[0.8125rem] font-black uppercase leading-[0.82] tracking-[-0.02em]"
+            className="text-[0.8125rem] font-semibold uppercase leading-[0.82] tracking-[-0.02em]"
           >
             Lore
             <br />
@@ -188,7 +192,7 @@ export function Header({ links }: { links: NavLink[] }) {
                 <Link
                   href={link.href}
                   onClick={closeOverlays}
-                  className="block py-3 text-2xl font-black uppercase tracking-tight"
+                  className="block py-3 text-2xl font-semibold uppercase tracking-tight"
                 >
                   {link.label}
                 </Link>

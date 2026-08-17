@@ -105,7 +105,7 @@ export default async function OrderPage({
       )}
 
       <p className="meta text-muted">Order</p>
-      <h1 className="mt-1 font-mono text-3xl tracking-tight">
+      <h1 className="mt-1 tabular-nums text-3xl tracking-tight">
         {order.orderNumber}
       </h1>
 
@@ -119,7 +119,7 @@ export default async function OrderPage({
           <p className="mt-4 border-t border-line pt-4 text-sm">
             <span className="meta text-muted">Tracking</span>
             <br />
-            <span className="font-mono">{order.trackingNumber}</span>
+            <span className="tabular-nums">{order.trackingNumber}</span>
             <span className="ml-2 text-muted">
               via {order.courier} {order.courierService}
             </span>
@@ -149,7 +149,7 @@ export default async function OrderPage({
                   {item.sizeSnapshot} · ×{item.qty}
                 </p>
               </div>
-              <span className="font-mono text-sm">
+              <span className="tabular-nums text-sm">
                 {formatIDR(item.priceSnapshot * item.qty)}
               </span>
             </li>
@@ -159,25 +159,25 @@ export default async function OrderPage({
         <dl className="space-y-2 border-t border-line pt-4 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted">Subtotal</dt>
-            <dd className="font-mono">{formatIDR(order.subtotal)}</dd>
+            <dd className="tabular-nums">{formatIDR(order.subtotal)}</dd>
           </div>
           {order.discountTotal > 0 && (
             <div className="flex justify-between text-accent">
               <dt>Discount {order.discountCode && `(${order.discountCode})`}</dt>
-              <dd className="font-mono">−{formatIDR(order.discountTotal)}</dd>
+              <dd className="tabular-nums">−{formatIDR(order.discountTotal)}</dd>
             </div>
           )}
           <div className="flex justify-between">
             <dt className="text-muted">
               Shipping{order.courier ? ` — ${order.courier}` : ""}
             </dt>
-            <dd className="font-mono">
+            <dd className="tabular-nums">
               {order.shippingTotal === 0 ? "Free" : formatIDR(order.shippingTotal)}
             </dd>
           </div>
           <div className="flex justify-between border-t border-line pt-2 text-base">
             <dt className="font-medium">Total</dt>
-            <dd className="font-mono">{formatIDR(order.grandTotal)}</dd>
+            <dd className="tabular-nums">{formatIDR(order.grandTotal)}</dd>
           </div>
         </dl>
       </section>

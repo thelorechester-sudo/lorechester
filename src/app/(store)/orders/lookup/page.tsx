@@ -11,10 +11,10 @@ export const metadata: Metadata = {
 export default function LookupPage() {
   return (
     <div className="mx-auto max-w-md px-5 py-20 sm:px-8">
-      <h1 className="text-headline font-black uppercase">Track an order</h1>
+      <h1 className="text-headline font-semibold uppercase">Track an order</h1>
       <p className="mt-3 text-sm leading-relaxed text-muted">
         Enter the email you ordered with and your order number — it looks like
-        <span className="font-mono"> LCTR-7K3M9QDX</span> and is in your
+        <span className="tabular-nums"> LCTR-7K3M9QDX</span> and is in your
         confirmation message.
       </p>
       <LookupForm />

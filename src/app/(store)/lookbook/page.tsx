@@ -16,7 +16,7 @@ export default async function LookbookPage() {
   return (
     <div className="pb-10">
       <div className="mx-auto max-w-[1600px] px-5 pt-14 sm:px-8">
-        <h1 className="text-headline font-black uppercase">Lookbook</h1>
+        <h1 className="text-headline font-semibold uppercase">Lookbook</h1>
       </div>
 
       {showcases.length === 0 ? (

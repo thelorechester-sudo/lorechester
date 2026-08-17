@@ -94,7 +94,7 @@ export default async function CollectionPage({
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink/80 to-transparent" />
           <div className="relative mx-auto w-full max-w-[1600px] px-5 pb-10 pt-24 sm:px-8">
-            <h1 className="text-headline font-black uppercase text-paper">
+            <h1 className="text-headline font-semibold uppercase text-paper">
               {collection.title}
             </h1>
             {collection.description && (
@@ -108,7 +108,7 @@ export default async function CollectionPage({
 
       <div className="mx-auto max-w-[1600px] px-5 py-10 sm:px-8">
         {!collection.heroImage && (
-          <h1 className="mb-8 text-headline font-black uppercase">
+          <h1 className="mb-8 text-headline font-semibold uppercase">
             {collection.title}
           </h1>
         )}

@@ -52,7 +52,7 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   return (
     <div className="mx-auto max-w-[1600px] px-5 py-12 sm:px-8">
       <header className="flex items-baseline gap-4 border-b border-line pb-6 sm:gap-6">
-        <h1 className="text-headline font-black uppercase">
+        <h1 className="text-headline font-semibold uppercase">
           {params.q ? "Search" : "Shop all"}
         </h1>
         <span aria-hidden className="h-px flex-1 bg-line" />

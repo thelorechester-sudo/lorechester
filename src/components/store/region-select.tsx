@@ -60,7 +60,7 @@ export function RegionSelect({
         <summary
           id={id}
           className={
-            "flex cursor-pointer list-none items-center justify-between border border-line bg-paper-pure px-3 py-2.5 text-sm outline-none focus-visible:border-ink [&::-webkit-details-marker]:hidden " +
+            "flex cursor-pointer list-none items-center justify-between rounded-input border border-line bg-paper-pure px-3 py-2.5 text-sm outline-none focus-visible:border-ink [&::-webkit-details-marker]:hidden " +
             (options.length === 0 ? "cursor-not-allowed text-muted" : "")
           }
         >
@@ -80,7 +80,7 @@ export function RegionSelect({
         </summary>
 
         {options.length > 0 && (
-          <div className="absolute z-20 mt-1 w-full border border-ink bg-paper-pure shadow-lg">
+          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-card border border-ink bg-paper-pure shadow-lg">
             <input
               type="text"
               autoFocus

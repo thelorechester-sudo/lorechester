@@ -75,7 +75,7 @@ function PayButton({ total }: { total: number }) {
     <button
       type="submit"
       disabled={pending || total <= 0}
-      className="flex h-13 w-full items-center justify-center bg-ink py-4 text-paper transition-colors hover:bg-ink-soft disabled:cursor-not-allowed disabled:bg-muted"
+      className="flex h-13 w-full items-center justify-center rounded-button bg-ink py-4 text-paper transition-colors hover:bg-ink-soft disabled:cursor-not-allowed disabled:bg-muted"
     >
       <span className="meta">
         {pending ? "Preparing payment…" : `Pay ${formatIDR(total)}`}
@@ -282,7 +282,7 @@ export function CheckoutForm({
   if (hydrated && items.length === 0) {
     return (
       <div className="mx-auto max-w-md px-5 py-24 text-center">
-        <h1 className="text-headline font-black uppercase">Your bag is empty</h1>
+        <h1 className="text-headline font-semibold uppercase">Your bag is empty</h1>
         <Link href="/shop" className="meta mt-6 inline-block border-b border-ink pb-1">
           Shop all
         </Link>
@@ -299,7 +299,7 @@ export function CheckoutForm({
 
       {/* ---------------------------------------------------------------- */}
       <div className="space-y-10">
-        <h1 className="text-headline font-black uppercase">Checkout</h1>
+        <h1 className="text-headline font-semibold uppercase">Checkout</h1>
 
         {errors._form && (
           <p
@@ -546,7 +546,7 @@ export function CheckoutForm({
                       <span className="text-muted">{option.serviceName}</span>
                       <span className="meta ml-2 text-muted">{option.eta}</span>
                     </span>
-                    <span className="font-mono text-sm">
+                    <span className="tabular-nums text-sm">
                       {formatIDR(option.price)}
                     </span>
                   </label>
@@ -589,7 +589,7 @@ export function CheckoutForm({
                     {line.size} · ×{line.qty}
                   </p>
                 </div>
-                <span className="font-mono text-sm">
+                <span className="tabular-nums text-sm">
                   {formatIDR(line.unitPrice * line.qty)}
                 </span>
               </li>
@@ -657,17 +657,17 @@ export function CheckoutForm({
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted">Subtotal</dt>
-              <dd className="font-mono">{formatIDR(cart.subtotal)}</dd>
+              <dd className="tabular-nums">{formatIDR(cart.subtotal)}</dd>
             </div>
             {discountTotal > 0 && (
               <div className="flex justify-between text-accent">
                 <dt>Discount</dt>
-                <dd className="font-mono">−{formatIDR(discountTotal)}</dd>
+                <dd className="tabular-nums">−{formatIDR(discountTotal)}</dd>
               </div>
             )}
             <div className="flex justify-between">
               <dt className="text-muted">Shipping</dt>
-              <dd className="font-mono">
+              <dd className="tabular-nums">
                 {!chosen
                   ? "—"
                   : freeShipping
@@ -677,7 +677,7 @@ export function CheckoutForm({
             </div>
             <div className="flex justify-between border-t border-line pt-2 text-base">
               <dt className="font-medium">Total</dt>
-              <dd className="font-mono">{formatIDR(grandTotal)}</dd>
+              <dd className="tabular-nums">{formatIDR(grandTotal)}</dd>
             </div>
           </dl>
 

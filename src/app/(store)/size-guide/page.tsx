@@ -33,7 +33,7 @@ const ROWS = [
 export default function SizeGuidePage() {
   return (
     <article className="mx-auto max-w-2xl px-5 py-20 sm:px-8">
-      <h1 className="text-headline font-black uppercase">Size guide</h1>
+      <h1 className="text-headline font-semibold uppercase">Size guide</h1>
       <p className="mt-4 text-sm leading-relaxed text-muted">
         All measurements in centimetres, taken with the garment laid flat. Allow
         1–2 cm either way — everything is cut and sewn in small runs.
@@ -65,7 +65,7 @@ export default function SizeGuidePage() {
                   {row[0]}
                 </th>
                 {row.slice(1).map((cell, index) => (
-                  <td key={index} className="py-3 pr-3 font-mono text-xs">
+                  <td key={index} className="py-3 pr-3 tabular-nums text-xs">
                     {cell}
                   </td>
                 ))}

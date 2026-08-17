@@ -63,7 +63,7 @@ export function NotifyMe({
           required
           placeholder={placeholder}
           aria-label="Email address"
-          className="w-full border border-line bg-paper-pure px-3 py-2.5 text-sm outline-none focus:border-ink"
+          className="w-full rounded-input border border-line bg-paper-pure px-3 py-2.5 text-sm outline-none focus:border-ink"
         />
         <Submit label={label} />
       </div>
@@ -73,7 +73,7 @@ export function NotifyMe({
         name="phone"
         placeholder="WhatsApp number (optional)"
         aria-label="WhatsApp number, optional"
-        className="w-full border border-line bg-paper-pure px-3 py-2.5 text-sm outline-none focus:border-ink"
+        className="w-full rounded-input border border-line bg-paper-pure px-3 py-2.5 text-sm outline-none focus:border-ink"
       />
 
       {state.error && (

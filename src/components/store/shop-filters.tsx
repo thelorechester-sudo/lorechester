@@ -195,7 +195,7 @@ function Option({
   const label = (
     <>
       <span className={active ? "text-ink" : undefined}>{children}</span>
-      <span className="ml-auto pl-2 font-mono text-[0.6875rem] tabular-nums text-muted">
+      <span className="ml-auto pl-2 tabular-nums text-[0.6875rem] tabular-nums text-muted">
         {count}
       </span>
     </>
@@ -241,7 +241,7 @@ function Rail({ base, params, listing }: RailProps) {
   const chosenSizes = list(params.size);
 
   return (
-    <div className="border border-line bg-paper-pure">
+    <div className="rounded-card border border-line bg-paper-pure">
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
         <span className="meta">Filter</span>
         {active.length > 0 && (
@@ -277,7 +277,7 @@ function Rail({ base, params, listing }: RailProps) {
             defaultValue={params.q ?? ""}
             placeholder="Search articles or codes"
             aria-label="Search products"
-            className="w-full border border-line bg-paper py-2.5 pl-9 pr-3 text-sm transition-colors placeholder:text-muted focus:border-ink"
+            className="w-full rounded-input border border-line bg-paper py-2.5 pl-9 pr-3 text-sm transition-colors placeholder:text-muted focus:border-ink"
           />
         </div>
       </form>
@@ -361,7 +361,7 @@ export function ShopFilterPanel(props: RailProps) {
   return (
     <>
       <details className="group/mobile mb-6 lg:hidden">
-        <summary className="meta flex cursor-pointer list-none items-center gap-2 border border-line bg-paper-pure px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+        <summary className="meta flex cursor-pointer list-none items-center gap-2 rounded-input border border-line bg-paper-pure px-4 py-3.5 [&::-webkit-details-marker]:hidden">
           Filter
           {/* The collapsed rail hides every applied filter, so the count has to
               survive on the summary or the listing looks arbitrary. */}
@@ -370,7 +370,7 @@ export function ShopFilterPanel(props: RailProps) {
               {count}
             </span>
           )}
-          <span className="ml-auto font-mono text-[0.6875rem] tabular-nums text-muted">
+          <span className="ml-auto tabular-nums text-[0.6875rem] tabular-nums text-muted">
             {props.listing.items.length}
           </span>
           <Chevron className="text-muted transition-transform duration-200 group-open/mobile:rotate-180" />
@@ -414,7 +414,7 @@ export function ActiveFilters({
         <li key={filter.label}>
           <Link
             href={buildHref(base, params, filter.patch)}
-            className="meta flex items-center gap-1.5 border border-line bg-paper-pure py-1.5 pl-3 pr-2.5 text-ink transition-colors hover:border-ink"
+            className="meta flex items-center gap-1.5 rounded-pill border border-line bg-paper-pure py-1.5 pl-3 pr-2.5 text-ink transition-colors hover:border-ink"
           >
             {filter.label}
             <span className="sr-only">— remove filter</span>
@@ -453,7 +453,7 @@ export function SortMenu({ base, params }: { base: string; params: Params }) {
    */
   return (
     <details className="group/sort relative">
-      <summary className="meta flex cursor-pointer list-none items-center gap-2 border border-line bg-paper-pure px-3 py-2.5 transition-colors hover:border-ink [&::-webkit-details-marker]:hidden">
+      <summary className="meta flex cursor-pointer list-none items-center gap-2 rounded-input border border-line bg-paper-pure px-3 py-2.5 transition-colors hover:border-ink [&::-webkit-details-marker]:hidden">
         <span className="text-muted">Sort</span>
         {current.label}
         <Chevron className="text-muted transition-transform duration-200 group-open/sort:rotate-180" />

@@ -20,7 +20,7 @@ export function SectionHead({
   return (
     <header className="mb-8 flex items-baseline gap-4 sm:gap-6">
       {index && <span className="meta hidden text-muted sm:block">{index}</span>}
-      <h2 className="text-headline font-black uppercase">{title}</h2>
+      <h2 className="text-headline font-semibold uppercase">{title}</h2>
       <span aria-hidden className="h-px flex-1 bg-line" />
       {href && (
         <Link

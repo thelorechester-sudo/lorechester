@@ -67,7 +67,7 @@ export default async function HomePage() {
             {hero ? "Current drop" : "Lorechester"} — Uncommon wear on your
             terraces
           </p>
-          <h1 className="mt-5 max-w-4xl text-display font-black uppercase text-paper">
+          <h1 className="mt-5 max-w-4xl text-display font-semibold uppercase text-paper">
             {hero?.title ?? "Lorechester"}
           </h1>
           {hero?.description && (
@@ -186,7 +186,7 @@ export default async function HomePage() {
             <p className="meta text-accent">
               Between the stone, steel, and stitch
             </p>
-            <h2 className="mt-5 text-headline font-black uppercase text-paper">
+            <h2 className="mt-5 text-headline font-semibold uppercase text-paper">
               Cut heavy.
               <br />
               Printed small.
@@ -217,7 +217,7 @@ export default async function HomePage() {
             height={700}
             className="mx-auto size-12"
           />
-          <h2 className="mt-6 text-headline font-black uppercase">
+          <h2 className="mt-6 text-headline font-semibold uppercase">
             Get the drop first
           </h2>
           <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-muted">

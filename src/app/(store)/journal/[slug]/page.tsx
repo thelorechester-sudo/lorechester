@@ -88,7 +88,7 @@ export default async function ArticlePage({
           </time>
         )}
 
-        <h1 className="mt-3 text-4xl font-black uppercase leading-[0.95] tracking-[-0.04em] sm:text-5xl">
+        <h1 className="mt-3 text-4xl font-semibold uppercase leading-[0.95] tracking-[-0.04em] sm:text-5xl">
           {article.title}
         </h1>
 

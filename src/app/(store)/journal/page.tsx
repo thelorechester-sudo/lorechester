@@ -17,7 +17,7 @@ export default async function JournalPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8">
-      <h1 className="text-headline font-black uppercase">Journal</h1>
+      <h1 className="text-headline font-semibold uppercase">Journal</h1>
 
       {posts.length === 0 ? (
         <p className="mt-12 border border-dashed border-line px-6 py-20 text-center text-sm text-muted">
@@ -61,7 +61,7 @@ export default async function JournalPage() {
                   )}
                   <h2
                     className={
-                      "mt-2 font-black uppercase leading-[0.95] tracking-[-0.03em] " +
+                      "mt-2 font-semibold uppercase leading-[0.95] tracking-[-0.03em] " +
                       (index === 0 ? "text-3xl sm:text-4xl" : "text-xl")
                     }
                   >

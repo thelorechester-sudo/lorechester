@@ -16,7 +16,7 @@ export function ProductGallery({
 
   if (images.length === 0) {
     return (
-      <div className="flex aspect-[4/5] items-center justify-center bg-paper">
+      <div className="flex aspect-[4/5] items-center justify-center rounded-card border border-line bg-paper">
         <span className="meta text-muted">No image</span>
       </div>
     );
@@ -36,7 +36,7 @@ export function ProductGallery({
                 aria-label={`Show image ${index + 1} of ${images.length}`}
                 aria-current={index === active}
                 className={
-                  "relative block aspect-square w-full overflow-hidden bg-paper-pure transition-opacity " +
+                  "relative block aspect-square w-full overflow-hidden rounded-input border border-line bg-paper-pure transition-opacity " +
                   (index === active
                     ? "ring-1 ring-ink"
                     : "opacity-60 hover:opacity-100")
@@ -55,7 +55,7 @@ export function ProductGallery({
         </ul>
       )}
 
-      <div className="relative aspect-[4/5] min-w-0 flex-1 overflow-hidden bg-paper-pure">
+      <div className="relative aspect-[4/5] min-w-0 flex-1 overflow-hidden rounded-card border border-line bg-paper-pure">
         <Image
           src={current.url}
           alt={current.alt || title}

@@ -15,8 +15,8 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "#0B0B0C",
-          color: "#FAF9F6",
+          background: "#000000",
+          color: "#FFFFFF",
           padding: 72,
           fontFamily: "sans-serif",
         }}
@@ -27,7 +27,7 @@ export default function OpengraphImage() {
             fontSize: 22,
             letterSpacing: 6,
             textTransform: "uppercase",
-            color: "#6E6E73",
+            color: "#8A8A8A",
           }}
         >
           Jongeren uit Zuidoost-Azië
@@ -38,8 +38,8 @@ export default function OpengraphImage() {
             style={{
               display: "flex",
               fontSize: 150,
-              fontWeight: 900,
-              letterSpacing: -8,
+              fontWeight: 600,
+              letterSpacing: -4,
               lineHeight: 1,
               textTransform: "uppercase",
             }}
@@ -51,7 +51,7 @@ export default function OpengraphImage() {
               display: "flex",
               marginTop: 24,
               fontSize: 30,
-              color: "#A1A1A6",
+              color: "#B5B5B5",
             }}
           >
             Uncommon wear on your terraces.
@@ -66,10 +66,10 @@ export default function OpengraphImage() {
             fontSize: 22,
             letterSpacing: 4,
             textTransform: "uppercase",
-            color: "#6E6E73",
+            color: "#8A8A8A",
           }}
         >
-          <div style={{ display: "flex", width: 56, height: 3, background: "#E4462B" }} />
+          <div style={{ display: "flex", width: 56, height: 3, background: "#8B0000" }} />
           Shop the drop
         </div>
       </div>

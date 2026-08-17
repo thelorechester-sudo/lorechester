@@ -25,7 +25,7 @@ export function PayNowButton({ token }: { token: string }) {
             onClose: () => router.refresh(),
           });
         }}
-        className="flex h-12 w-full items-center justify-center bg-ink text-paper transition-colors hover:bg-ink-soft"
+        className="flex h-12 w-full items-center justify-center rounded-button bg-ink text-paper transition-colors hover:bg-ink-soft"
       >
         <span className="meta">Pay now</span>
       </button>
