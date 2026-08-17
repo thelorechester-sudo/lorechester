@@ -63,7 +63,7 @@ export function ProductCard({
           {(soldOut || onSale || lowStock) && (
             <span
               className={
-                "meta absolute left-3 top-3 px-2 py-1 " +
+                "meta absolute left-3 top-3 rounded-pill px-2.5 py-1 " +
                 (soldOut
                   ? "bg-ink text-paper"
                   : onSale

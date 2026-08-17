@@ -175,7 +175,7 @@ function Option({
       aria-hidden
       className={
         "flex size-[15px] shrink-0 items-center justify-center border transition-colors " +
-        (shape === "dot" ? "rounded-full " : "") +
+        (shape === "dot" ? "rounded-full " : "rounded-[3px] ") +
         (active
           ? "border-ink bg-ink text-paper"
           : empty
@@ -467,7 +467,7 @@ export function SortMenu({ base, params }: { base: string; params: Params }) {
             })}
             aria-current={option.value === active ? "true" : undefined}
             className={
-              "block px-3 py-2 text-sm transition-colors " +
+              "block rounded-input px-3 py-2 text-sm transition-colors " +
               (option.value === active
                 ? "bg-ink text-paper"
                 : "text-muted hover:bg-paper hover:text-ink")

@@ -138,7 +138,7 @@ export function AddToCart({
             type="button"
             onClick={handleAdd}
             disabled={allSoldOut}
-            className="flex h-13 w-full items-center justify-center bg-ink py-4 text-paper transition-colors hover:bg-ink-soft disabled:cursor-not-allowed disabled:bg-muted"
+            className="flex h-13 w-full items-center justify-center rounded-button bg-ink py-4 text-paper transition-colors hover:bg-ink-soft disabled:cursor-not-allowed disabled:bg-muted"
           >
             <span className="meta">
               {allSoldOut

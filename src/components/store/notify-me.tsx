@@ -11,7 +11,7 @@ function Submit({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="shrink-0 border border-ink px-5 py-2.5 transition-colors hover:bg-ink hover:text-paper disabled:opacity-50"
+      className="shrink-0 rounded-button border border-ink px-5 py-2.5 transition-colors hover:bg-ink hover:text-paper disabled:opacity-50"
     >
       <span className="meta">{pending ? "…" : label}</span>
     </button>
