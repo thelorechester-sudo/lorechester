@@ -127,12 +127,21 @@ function createRemoteDb(): PostgresJsDatabase<typeof schema> {
     postgres(requireEnv("DATABASE_URL"), {
       // Supabase's transaction pooler does not support prepared statements.
       prepare: false,
-      max: 10,
+      /*
+       * One warm serverless instance serves few requests at once, but there
+       * are many instances and they all share Supabase's 200-connection
+       * ceiling. Ten each meant twenty warm instances hit the limit; three
+       * leaves real headroom without starving a single instance.
+       */
+      max: 3,
+      // Hand idle connections back rather than holding them for the life of
+      // the instance — an instance that served one request at 3am should not
+      // still be occupying pooler slots.
+      idle_timeout: 20,
+      max_lifetime: 60 * 30,
     });
 
-  if (process.env.NODE_ENV !== "production") {
-    globalForDb.__lorechesterSql = sql;
-  }
+  globalForDb.__lorechesterSql = sql;
 
   return drizzle(sql, { schema });
 }
@@ -148,11 +157,18 @@ function resolveDb(): PostgresJsDatabase<typeof schema> {
    * window disappear, and their webhooks settle against an unknown order.
    */
   const created = isLocalDatabase() ? createLocalDb() : createRemoteDb();
-  // Cached on globalThis so a dev hot-reload reuses the same instance rather
-  // than opening a second handle on the same PGlite directory.
-  if (process.env.NODE_ENV !== "production") {
-    globalForDb.__lorechesterDb = created;
-  }
+
+  /*
+   * Cached unconditionally, production included. This was gated on
+   * NODE_ENV !== "production" because the reason for caching was a dev
+   * concern — stopping a hot-reload from opening a second handle on the same
+   * PGlite directory. In production it meant the cache never populated, and
+   * `db` below is a Proxy that calls this on *every property access*, so
+   * every `db.query…` built a fresh connection pool that was never reused or
+   * closed. Supabase's pooler capped out at 200 and every route started
+   * failing with EMAXCONN.
+   */
+  globalForDb.__lorechesterDb = created;
   return created;
 }
 
