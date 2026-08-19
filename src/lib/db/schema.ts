@@ -424,6 +424,24 @@ export type ShowcaseImage = {
   alt: string;
 };
 
+/**
+ * Editable chunks of the site that are copy rather than catalog — currently
+ * just the home page.
+ *
+ * One row per key with a jsonb body, rather than a column per field: the
+ * shape is owned by Zod in src/lib/settings.ts, so adding a field to the home
+ * page form never needs a migration. Rows are written by the admin only, and
+ * every read falls back to the defaults in that file, so an empty table
+ * renders exactly what the hardcoded page rendered before.
+ */
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull().default({}),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 /* ------------------------------------------------------------------ */
 /* Inferred types                                                      */
 /* ------------------------------------------------------------------ */

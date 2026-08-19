@@ -46,14 +46,16 @@ on conflict (user_id) do nothing;
 -- not use PostgREST at all — it talks to Postgres directly via Drizzle as the
 -- `postgres` role, which bypasses RLS — so enabling RLS with NO policies
 -- closes the API while leaving the app untouched.
+-- Enumerated from the catalogue rather than listed by hand. A hardcoded list
+-- silently omits the next table someone adds, and an omitted table is
+-- world-readable through the public anon key — the failure is invisible until
+-- someone goes looking. Enabling RLS with no policies is safe for every table
+-- here by definition: the app connects as `postgres`, which bypasses RLS.
 do $$
 declare t text;
 begin
-  foreach t in array array[
-    'products', 'product_images', 'variants', 'collections',
-    'product_collections', 'orders', 'order_items', 'discounts',
-    'articles', 'showcases', 'waitlist', 'profiles'
-  ]
+  for t in
+    select tablename from pg_tables where schemaname = 'public'
   loop
     execute format('alter table public.%I enable row level security', t);
     execute format('alter table public.%I force row level security', t);
