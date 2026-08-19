@@ -128,12 +128,15 @@ function createRemoteDb(): PostgresJsDatabase<typeof schema> {
       // Supabase's transaction pooler does not support prepared statements.
       prepare: false,
       /*
-       * One warm serverless instance serves few requests at once, but there
-       * are many instances and they all share Supabase's 200-connection
-       * ceiling. Ten each meant twenty warm instances hit the limit; three
-       * leaves real headroom without starving a single instance.
+       * The home page fires six queries concurrently (five of its own plus
+       * the layout's), so a small pool serialises them and, against the
+       * transaction pooler, intermittently stalled that page to a 300s
+       * function timeout while every lighter route stayed fine. The
+       * connection exhaustion this file used to cause came from building a
+       * new pool per query, not from the pool being large — with the cache
+       * above that leak is gone, so the ceiling can go back up.
        */
-      max: 3,
+      max: 10,
       // Hand idle connections back rather than holding them for the life of
       // the instance — an instance that served one request at 3am should not
       // still be occupying pooler slots.
