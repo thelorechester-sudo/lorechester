@@ -3,13 +3,7 @@ import "server-only";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db";
-import { articles, products, settings, showcases } from "@/lib/db/schema";
-import {
-  HOME_KEY,
-  homeSettingsSchema,
-  resolveHome,
-  type ResolvedHome,
-} from "@/lib/settings";
+import { articles, products, showcases } from "@/lib/db/schema";
 
 /**
  * Public content queries. Everything filters to published — a draft must not
@@ -53,29 +47,4 @@ export async function getShowcaseProducts(productIds: string[]) {
     with: { images: true },
     where: and(inArray(products.id, productIds), eq(products.status, "active")),
   });
-}
-
-/**
- * Admin-editable home page copy.
- *
- * Never throws on bad data: a row that fails validation — hand-edited, or
- * written under an older shape — falls back to the defaults rather than
- * taking the storefront down.
- */
-export async function getHomeSettings(): Promise<ResolvedHome> {
-  const [row] = await db
-    .select()
-    .from(settings)
-    .where(eq(settings.key, HOME_KEY))
-    .limit(1);
-
-  if (!row) return resolveHome({});
-
-  const parsed = homeSettingsSchema.safeParse(row.value);
-  if (!parsed.success) {
-    console.warn("home settings failed validation; using defaults");
-    return resolveHome({});
-  }
-
-  return resolveHome(parsed.data);
 }

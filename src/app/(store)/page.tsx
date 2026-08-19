@@ -10,7 +10,7 @@ import {
   getFeaturedProducts,
   getShopProducts,
 } from "@/lib/catalog";
-import { getHomeSettings, getPublishedShowcases } from "@/lib/content";
+import { getPublishedShowcases } from "@/lib/content";
 
 // ponytail: rendered per-request so stock and sold-out badges are never stale.
 // Switch to `revalidate = 60` + revalidatePath from the payment webhook if
@@ -18,7 +18,7 @@ import { getHomeSettings, getPublishedShowcases } from "@/lib/content";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [featured, collections, showcases, all, home] = await Promise.all([
+  const [featured, collections, showcases, all] = await Promise.all([
     getFeaturedProducts(8),
     getCollections(),
     getPublishedShowcases(1),
@@ -26,27 +26,10 @@ export default async function HomePage() {
     // catalog is small enough that a dedicated grouped query would be a
     // second query to save nothing.
     getShopProducts({ sort: "newest" }),
-    // Admin-editable copy. Every field falls back to the wording this page
-    // shipped with, so an untouched settings row renders identically.
-    getHomeSettings(),
   ]);
 
   const hero = collections[0];
-  const heroImage =
-    home.heroImage ?? hero?.heroImage ?? featured[0]?.image?.url ?? null;
-  /*
-   * Admin override first, otherwise the second featured product's shot, which
-   * is what this band used before it was editable.
-   */
-  const bandImage = home.editorialImage
-    ? { url: home.editorialImage, alt: "" }
-    : featured[1]?.image
-      ? {
-          url: featured[1].image.url,
-          alt: featured[1].image.alt || featured[1].title,
-        }
-      : null;
-
+  const heroImage = hero?.heroImage ?? featured[0]?.image?.url ?? null;
   const upcoming = collections.find(
     (collection) => collection.releaseAt && collection.releaseAt > new Date(),
   );
@@ -81,7 +64,8 @@ export default async function HomePage() {
 
         <div className="relative mx-auto w-full max-w-[1600px] px-5 pb-14 pt-32 sm:px-8">
           <p className="meta text-paper/60">
-            {hero ? "Current drop" : "Lorechester"} — {home.heroEyebrow}
+            {hero ? "Current drop" : "Lorechester"} — Uncommon wear on your
+            terraces
           </p>
           <h1 className="mt-5 max-w-4xl text-display font-semibold uppercase text-paper">
             {hero?.title ?? "Lorechester"}
@@ -96,13 +80,13 @@ export default async function HomePage() {
               href={hero ? `/shop/${hero.slug}` : "/shop"}
               className="meta flex h-12 items-center bg-paper px-9 text-ink transition-colors hover:bg-accent hover:text-paper-pure"
             >
-              {home.heroPrimaryCta}
+              Shop the drop
             </Link>
             <Link
               href="/shop"
               className="meta flex h-12 items-center border border-paper/40 px-9 text-paper transition-colors hover:border-paper"
             >
-              {home.heroSecondaryCta}
+              All articles
             </Link>
           </div>
         </div>
@@ -164,12 +148,7 @@ export default async function HomePage() {
 
       {/* Featured ---------------------------------------------------------- */}
       <section className="mx-auto max-w-[1600px] px-5 pb-20 sm:px-8">
-        <SectionHead
-          index="02"
-          title={home.featuredHeading}
-          href="/shop"
-          linkLabel={home.featuredLinkLabel}
-        />
+        <SectionHead index="02" title="Featured" href="/shop" linkLabel="View all" />
 
         {featured.length === 0 ? (
           <p className="border border-dashed border-line px-6 py-16 text-center text-sm text-muted">
@@ -192,31 +171,36 @@ export default async function HomePage() {
       {showcases[0] && <ShowcaseBand showcase={showcases[0]} />}
 
       {/* Editorial band ---------------------------------------------------- */}
-      {bandImage && (
+      {featured[1]?.image && (
         <section className="relative grid min-h-[70vh] items-center bg-ink md:grid-cols-2">
           <div className="relative h-full min-h-[50vh]">
             <Image
-              src={bandImage.url}
-              alt={bandImage.alt}
+              src={featured[1].image.url}
+              alt={featured[1].image.alt || featured[1].title}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
             />
           </div>
           <div className="px-5 py-20 sm:px-16">
-            <p className="meta text-accent">{home.editorialEyebrow}</p>
-            {/* Line breaks in the admin field are meaningful here. */}
-            <h2 className="mt-5 whitespace-pre-line text-headline font-semibold uppercase text-paper">
-              {home.editorialHeading}
+            <p className="meta text-accent">
+              Between the stone, steel, and stitch
+            </p>
+            <h2 className="mt-5 text-headline font-semibold uppercase text-paper">
+              Cut heavy.
+              <br />
+              Printed small.
             </h2>
             <p className="mt-6 max-w-sm text-sm leading-relaxed text-paper/70">
-              {home.editorialBody}
+              Every article gets a code before it gets a name, and every run is
+              capped. We print what we can stand behind, sell it once, and move
+              on to the next one.
             </p>
             <Link
-              href={home.editorialHref}
+              href="/about"
               className="meta mt-9 inline-block border-b border-paper/40 pb-1 text-paper transition-colors hover:border-accent"
             >
-              {home.editorialCta}
+              Read more
             </Link>
           </div>
         </section>
@@ -234,10 +218,11 @@ export default async function HomePage() {
             className="mx-auto size-12"
           />
           <h2 className="mt-6 text-headline font-semibold uppercase">
-            {home.dropHeading}
+            Get the drop first
           </h2>
           <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-muted">
-            {home.dropBody}
+            Runs are small and they go fast. Join the list and we&apos;ll message
+            you before the next one goes live — no other email, ever.
           </p>
           <div className="mx-auto mt-7 max-w-sm text-left">
             <NotifyMe label="Join" placeholder="your@email.com" />
