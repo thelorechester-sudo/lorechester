@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-3">
             We never see or store your card details — those go straight to
-            Midtrans.
+            DOKU.
           </p>
         </section>
 
@@ -56,7 +56,7 @@ export default function PrivacyPage() {
           </h2>
           <ul className="mt-3 space-y-2">
             <li>
-              <strong className="text-ink">Midtrans</strong> — payment
+              <strong className="text-ink">DOKU</strong> — payment
               processing. Receives your name, email, phone and order total.
             </li>
             <li>

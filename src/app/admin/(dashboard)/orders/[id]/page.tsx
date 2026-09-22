@@ -187,7 +187,7 @@ export default async function AdminOrderPage({
                 : "—"}
             </p>
             <p className="break-all">
-              Midtrans id: {order.midtransTransactionId ?? "—"}
+              DOKU id: {order.dokuTransactionId ?? "—"}
             </p>
           </section>
         </aside>

@@ -102,13 +102,13 @@ export async function claimDiscountUse(
 }
 
 /**
- * Hand back a use claimed by an order that will never be paid — a Snap
- * failure, an expiry, or a cancellation.
+ * Hand back a use claimed by an order that will never be paid — a DOKU
+ * Checkout failure, an expiry, or a cancellation.
  *
  * The claim happens when the order is created, so that a code with
  * `usageLimit` cannot be redeemed by everyone who reaches checkout inside the
  * payment window. The cost of claiming early is that an abandoned checkout
- * holds a use until Midtrans expires it; this is what gives it back.
+ * holds a use until DOKU expires it; this is what gives it back.
  *
  * Floored at zero so a double release can never mint uses.
  */

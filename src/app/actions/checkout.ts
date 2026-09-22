@@ -9,8 +9,7 @@ import { cartItemsSchema } from "@/lib/cart-types";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
 import { db } from "@/lib/db";
 import { orderItems, orders } from "@/lib/db/schema";
-import { optionalEnv } from "@/lib/env";
-import { createSnapTransaction } from "@/lib/midtrans";
+import { createDokuPayment, isConfigured as isDokuConfigured } from "@/lib/doku";
 import { notifyOrderPlaced } from "@/lib/notify";
 import { normalizeIndonesianPhone } from "@/lib/phone";
 import {
@@ -42,8 +41,8 @@ const checkoutSchema = z.object({
 export type CheckoutState = {
   ok: boolean;
   errors?: Record<string, string>;
-  /** Snap token — the browser opens the payment popup with it. */
-  token?: string;
+  /** DOKU Checkout URL — the browser is redirected there to pay. */
+  paymentUrl?: string;
   orderNumber?: string;
 };
 
@@ -104,7 +103,7 @@ export async function previewDiscount(code: string, items: unknown) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Turn a bag into an unpaid order and hand back a Snap token.
+ * Turn a bag into an unpaid order and hand back a DOKU Checkout URL.
  *
  * Everything that decides the amount charged is recomputed here from the
  * database: line prices, the discount, and the courier rate. The only things
@@ -112,7 +111,7 @@ export async function previewDiscount(code: string, items: unknown) {
  * *which* courier option was picked.
  *
  * Stock is NOT touched here — it is decremented by the payment webhook once
- * money actually arrives. See src/app/api/webhooks/midtrans/route.ts.
+ * money actually arrives. See src/app/api/webhooks/doku/route.ts.
  */
 export async function createOrder(
   _prev: CheckoutState,
@@ -121,12 +120,12 @@ export async function createOrder(
   // Gated on the payment provider, not on demo mode — the local database can
   // record orders perfectly well, but an order with no way to be paid for is
   // worse than a checkout that plainly says it cannot take money yet.
-  if (!optionalEnv("MIDTRANS_SERVER_KEY")) {
+  if (!isDokuConfigured()) {
     return {
       ok: false,
       errors: {
         _form:
-          "Payments are not configured yet. Add your Midtrans keys to .env.local to take real orders — see AGENTS.md.",
+          "Payments are not configured yet. Add your DOKU keys to .env.local to take real orders — see AGENTS.md.",
       },
     };
   }
@@ -215,7 +214,7 @@ export async function createOrder(
   });
 
   if (totals.grandTotal <= 0) {
-    // Midtrans rejects a zero gross_amount, and a free order should be handled
+    // DOKU rejects a zero amount, and a free order should be handled
     // deliberately rather than by accident.
     return {
       ok: false,
@@ -242,7 +241,7 @@ export async function createOrder(
         .insert(orders)
         .values({
           orderNumber,
-          midtransOrderId: orderNumber,
+          dokuInvoiceNumber: orderNumber,
           email: input.email.toLowerCase().trim(),
           phone,
           customerId: user?.id ?? null,
@@ -307,9 +306,9 @@ export async function createOrder(
     throw error;
   }
 
-  /* 6. Snap token. -------------------------------------------------------- */
+  /* 6. DOKU Checkout session. ---------------------------------------------- */
   try {
-    const snapItems = cart.lines.map((line) => ({
+    const lineItems = cart.lines.map((line) => ({
       id: line.variantId,
       name: `${line.title} (${line.size})`,
       price: line.unitPrice,
@@ -317,7 +316,7 @@ export async function createOrder(
     }));
 
     if (totals.discountTotal > 0) {
-      snapItems.push({
+      lineItems.push({
         id: "discount",
         name: `Discount ${discountCode ?? ""}`.trim(),
         price: -totals.discountTotal,
@@ -325,7 +324,7 @@ export async function createOrder(
       });
     }
     if (totals.shippingTotal > 0) {
-      snapItems.push({
+      lineItems.push({
         id: "shipping",
         name: `Shipping — ${shipping.courierName} ${shipping.serviceName}`,
         price: totals.shippingTotal,
@@ -333,12 +332,12 @@ export async function createOrder(
       });
     }
 
-    const snap = await createSnapTransaction({
-      orderId: orderNumber,
-      grossAmount: totals.grandTotal,
-      items: snapItems,
+    const payment = await createDokuPayment({
+      invoiceNumber: orderNumber,
+      amount: totals.grandTotal,
+      lineItems,
       customer: {
-        firstName: input.recipientName.trim(),
+        name: input.recipientName.trim(),
         email: input.email.toLowerCase().trim(),
         phone,
       },
@@ -346,7 +345,7 @@ export async function createOrder(
 
     await db
       .update(orders)
-      .set({ snapToken: snap.token, updatedAt: new Date() })
+      .set({ dokuPaymentUrl: payment.paymentUrl, updatedAt: new Date() })
       .where(eq(orders.id, order.id));
 
     /*
@@ -364,18 +363,18 @@ export async function createOrder(
       })),
     }).catch((error) => console.error("notifyOrderPlaced failed", error));
 
-    return { ok: true, token: snap.token, orderNumber };
+    return { ok: true, paymentUrl: payment.paymentUrl, orderNumber };
   } catch (error) {
     // The order row exists but can never be paid, so close it out rather than
     // leaving a permanently pending order in the admin.
-    console.error("Midtrans Snap failed", error);
+    console.error("DOKU Checkout failed", error);
     await db
       .update(orders)
       .set({ status: "cancelled", updatedAt: new Date() })
       .where(eq(orders.id, order.id));
 
     // The use was claimed when the order row was written. This order can never
-    // settle, so hand it back rather than burning it on a failed Snap call.
+    // settle, so hand it back rather than burning it on a failed DOKU call.
     if (discountCode) await releaseDiscountUse(discountCode);
 
     return {

@@ -15,7 +15,7 @@ import {
 
 /**
  * All money is stored as an INTEGER number of rupiah.
- * IDR has no minor unit, and Midtrans rejects non-integer gross_amount.
+ * IDR has no minor unit, and DOKU rejects non-integer amounts.
  * Never introduce a numeric/decimal money column here.
  */
 
@@ -27,7 +27,7 @@ export const productStatus = pgEnum("product_status", [
 
 export const orderStatus = pgEnum("order_status", [
   "pending", // awaiting payment
-  "paid", // Midtrans settled, stock decremented
+  "paid", // DOKU settled, stock decremented
   "packed",
   "shipped",
   "delivered",
@@ -173,11 +173,11 @@ export const orders = pgTable(
     courierService: text("courier_service"),
     trackingNumber: text("tracking_number"),
 
-    /** order_id we hand to Midtrans. Unique — the webhook idempotency key. */
-    midtransOrderId: text("midtrans_order_id").notNull(),
-    midtransTransactionId: text("midtrans_transaction_id"),
-    /** Snap token, so an unpaid order can reopen the payment popup. */
-    snapToken: text("snap_token"),
+    /** invoice_number we hand to DOKU. Unique — the webhook idempotency key. */
+    dokuInvoiceNumber: text("doku_invoice_number").notNull(),
+    dokuTransactionId: text("doku_transaction_id"),
+    /** DOKU Checkout payment URL, so an unpaid order can reopen it. */
+    dokuPaymentUrl: text("doku_payment_url"),
     paymentMethod: text("payment_method"),
     paidAt: timestamp("paid_at", { withTimezone: true }),
     /** Set when the payment webhook has already decremented stock. */
@@ -193,7 +193,7 @@ export const orders = pgTable(
   },
   (t) => [
     uniqueIndex("orders_order_number_idx").on(t.orderNumber),
-    uniqueIndex("orders_midtrans_order_id_idx").on(t.midtransOrderId),
+    uniqueIndex("orders_doku_invoice_number_idx").on(t.dokuInvoiceNumber),
     index("orders_status_idx").on(t.status, t.createdAt),
     index("orders_email_idx").on(t.email),
   ],

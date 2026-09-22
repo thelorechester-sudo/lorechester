@@ -15,6 +15,13 @@
       "when": 1790058710527,
       "tag": "0001_bouncy_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790076129184,
+      "tag": "0002_rename_midtrans_columns_to_doku",
+      "breakpoints": true
     }
   ]
 }

@@ -104,7 +104,7 @@ test("releasing hands the use back so the code works again", async () => {
   assert.equal(await claimDiscountUse("TERRACE50", db), true);
   assert.equal(await claimDiscountUse("TERRACE50", db), false);
 
-  // The order died — Snap failed, or Midtrans expired it unpaid.
+  // The order died — DOKU Checkout failed, or DOKU expired it unpaid.
   await releaseDiscountUse("TERRACE50", db);
 
   assert.equal(await usedCount(), 0);

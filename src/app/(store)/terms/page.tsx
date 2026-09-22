@@ -60,8 +60,8 @@ export default function TermsPage() {
             Payment
           </h2>
           <p className="mt-3">
-            Payments are processed by Midtrans. We never see or store your card
-            number. An order is only confirmed when Midtrans tells us the
+            Payments are processed by DOKU. We never see or store your card
+            number. An order is only confirmed when DOKU tells us the
             payment settled; closing the payment window does not complete an
             order. Unpaid orders expire after 24 hours.
           </p>

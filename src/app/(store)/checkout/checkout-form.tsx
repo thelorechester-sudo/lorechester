@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -20,22 +19,6 @@ import { EMPTY_CART, type PricedCart } from "@/lib/cart-types";
 import { PROVINCES, REGENCIES_BY_PROVINCE, type Region } from "@/lib/indonesia-regions";
 import { formatIDR } from "@/lib/money";
 import type { ShippingArea, ShippingOption } from "@/lib/shipping";
-
-declare global {
-  interface Window {
-    snap?: {
-      pay: (
-        token: string,
-        callbacks: {
-          onSuccess?: () => void;
-          onPending?: () => void;
-          onError?: () => void;
-          onClose?: () => void;
-        },
-      ) => void;
-    };
-  }
-}
 
 const inputClass =
   "w-full border border-line bg-paper-pure px-3 py-2.5 text-sm outline-none focus:border-ink";
@@ -99,7 +82,6 @@ export function CheckoutForm({
    */
   shippingConfigured: boolean;
 }) {
-  const router = useRouter();
   const { items, hydrated, clear } = useCart();
   const [state, formAction] = useActionState<CheckoutState, FormData>(
     createOrder,
@@ -229,35 +211,18 @@ export function CheckoutForm({
   // hanging around until an effect clears them.
   const options = canQuote ? quoted : [];
 
-  /* Open the Snap popup once the server hands back a token ---------------- */
+  /* Redirect to the DOKU Checkout page once the server hands back a URL --- */
   const handled = useRef<string | null>(null);
   useEffect(() => {
-    if (!state.ok || !state.token || !state.orderNumber) return;
-    if (handled.current === state.token) return;
-    handled.current = state.token;
+    if (!state.ok || !state.paymentUrl || !state.orderNumber) return;
+    if (handled.current === state.paymentUrl) return;
+    handled.current = state.paymentUrl;
 
-    const orderUrl = `/orders/${state.orderNumber}`;
-
-    if (!window.snap) {
-      // Script blocked or still loading — the order exists, so send them to
-      // the order page where they can retry rather than losing it.
-      router.push(orderUrl);
-      return;
-    }
-
-    window.snap.pay(state.token, {
-      onSuccess: () => {
-        clear();
-        router.push(`${orderUrl}?paid=1`);
-      },
-      onPending: () => {
-        clear();
-        router.push(orderUrl);
-      },
-      onError: () => router.push(orderUrl),
-      onClose: () => router.push(orderUrl),
-    });
-  }, [state, router, clear]);
+    // The bag is only cleared once we're actually leaving for DOKU — a failed
+    // navigation should not lose the cart along with it.
+    clear();
+    window.location.href = state.paymentUrl;
+  }, [state, clear]);
 
   /* Totals ---------------------------------------------------------------- */
   const chosen = options.find((option) => option.key === optionKey) ?? null;

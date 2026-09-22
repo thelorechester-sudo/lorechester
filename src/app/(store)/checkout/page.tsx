@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 
+import { isConfigured as isDokuConfigured } from "@/lib/doku";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
-import { clientKey, snapScriptUrl } from "@/lib/midtrans";
 import { isShippingConfigured } from "@/lib/shipping";
 import { CheckoutForm } from "./checkout-form";
 
@@ -14,20 +13,12 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default function CheckoutPage() {
-  const key = clientKey();
-
   return (
     <>
-      {key && (
-        // Snap's popup script. `data-client-key` is a publishable key — the
-        // server key never reaches the browser.
-        <Script src={snapScriptUrl()} data-client-key={key} strategy="afterInteractive" />
-      )}
-
-      {!key && (
+      {!isDokuConfigured() && (
         <p className="mx-auto max-w-6xl px-5 pt-8 text-sm text-accent sm:px-8">
-          Payments are not configured yet — set NEXT_PUBLIC_MIDTRANS_CLIENT_KEY
-          and MIDTRANS_SERVER_KEY in .env.local.
+          Payments are not configured yet — set DOKU_CLIENT_ID and
+          DOKU_SECRET_KEY in .env.local.
         </p>
       )}
 

@@ -59,18 +59,19 @@ came from the client's ASSET drive and is downscaled for web.
 ## Stack
 
 Next.js 16 (App Router) · Drizzle + Supabase Postgres · Supabase Auth &
-Storage · Midtrans Snap (payments) · Biteship (shipping) · Fonnte (WhatsApp) ·
+Storage · DOKU Checkout (payments) · Biteship (shipping) · Fonnte (WhatsApp) ·
 Resend (email) · Tailwind v4.
 
 ## Rules that are not negotiable
 
 1. **Money is an integer number of rupiah.** No decimals, no floats, no
-   `numeric` columns. Midtrans rejects fractional `gross_amount`. Use the
+   `numeric` columns. DOKU rejects fractional amounts. Use the
    helpers in `src/lib/money.ts`.
 2. **Never trust a price from the client.** Checkout receives variant ids and
    quantities only; every total is recomputed from the database server-side.
-3. **Verify the Midtrans webhook signature** before acting on it, and make the
-   handler idempotent — Midtrans retries deliveries.
+3. **Verify the DOKU webhook signature** before acting on it, and make the
+   handler idempotent — DOKU retries deliveries (up to 6 times, exponential
+   backoff, until it gets a 2xx).
 4. **Stock is decremented in the payment webhook, inside a transaction**, never
    when checkout opens.
 5. **Call `requireAdmin()` from `@/lib/auth` in every admin page AND every
@@ -118,19 +119,21 @@ inconsistent: `rm -rf .pglite` and seed again.
 
 Payments and shipping are optional until you need them — checkout falls back to
 a flat shipping rate when `BITESHIP_API_KEY` is unset, and the pay button
-explains itself when the Midtrans keys are missing.
+explains itself when the DOKU keys are missing.
 
-### Midtrans
+### DOKU
 
-Set the notification URL in the Midtrans dashboard under
-**Settings → Configuration → Payment Notification URL**:
+DOKU Checkout is a hosted payment page: `createDokuPayment` (`src/lib/doku.ts`)
+returns a URL, and the browser is redirected there — no client-side script or
+popup involved. Set the Notification URL in the DOKU Back Office to:
 
 ```
-https://your-domain/api/webhooks/midtrans
+https://your-domain/api/webhooks/doku
 ```
 
 Nothing marks an order paid except that webhook. Locally, expose it with a
-tunnel (`ngrok http 3000`) — the Snap popup alone does not settle an order.
+tunnel (`ngrok http 3000`) — landing back on the order page after paying does
+not settle an order by itself.
 
 ## Checks
 

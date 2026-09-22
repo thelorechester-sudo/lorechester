@@ -1,6 +1,6 @@
 /**
  * Money helpers. Every amount in this app is an integer number of rupiah —
- * there is no minor unit, and Midtrans rejects fractional gross_amount.
+ * there is no minor unit, and DOKU rejects fractional amounts.
  */
 
 const idr = new Intl.NumberFormat("id-ID", {

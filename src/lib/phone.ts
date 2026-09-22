@@ -2,7 +2,7 @@
  * Indonesian mobile numbers.
  *
  * Customers type 0812…, +62 812…, 62812… and "0812-3456-7890" interchangeably.
- * Midtrans and the WhatsApp gateway both want one canonical form, so normalise
+ * DOKU and the WhatsApp gateway both want one canonical form, so normalise
  * once at the trust boundary and store only that.
  */
 

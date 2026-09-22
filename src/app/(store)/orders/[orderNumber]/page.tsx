@@ -2,13 +2,11 @@ import { eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import Script from "next/script";
 import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders, type OrderStatus } from "@/lib/db/schema";
-import { clientKey, snapScriptUrl } from "@/lib/midtrans";
 import { formatIDR } from "@/lib/money";
 import { PayNowButton } from "./pay-now";
 
@@ -71,7 +69,7 @@ export default async function OrderPage({
 
   /*
    * The order number is a high-entropy bearer token, which is what lets the
-   * Midtrans redirect and the WhatsApp link work without a login. Personal
+   * DOKU redirect and the WhatsApp link work without a login. Personal
    * details are still masked unless the viewer is provably the customer.
    */
   const user = await getCurrentUser();
@@ -83,19 +81,11 @@ export default async function OrderPage({
 
   const status = STATUS_COPY[order.status];
   const address = order.shippingAddress;
-  const key = clientKey();
-  const canRetryPayment = order.status === "pending" && Boolean(order.snapToken);
+  const canRetryPayment =
+    order.status === "pending" && Boolean(order.dokuPaymentUrl);
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-14 sm:px-8">
-      {canRetryPayment && key && (
-        <Script
-          src={snapScriptUrl()}
-          data-client-key={key}
-          strategy="afterInteractive"
-        />
-      )}
-
       {query.paid && order.status === "pending" && (
         <p className="mb-6 border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           Thanks — we&apos;ve received your payment and are waiting for the bank
@@ -113,7 +103,9 @@ export default async function OrderPage({
         <p className="text-lg font-medium">{status.label}</p>
         <p className="mt-1 text-sm text-muted">{status.detail}</p>
 
-        {canRetryPayment && <PayNowButton token={order.snapToken!} />}
+        {canRetryPayment && (
+          <PayNowButton paymentUrl={order.dokuPaymentUrl!} />
+        )}
 
         {order.trackingNumber && (
           <p className="mt-4 border-t border-line pt-4 text-sm">

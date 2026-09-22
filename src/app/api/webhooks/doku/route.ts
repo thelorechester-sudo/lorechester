@@ -2,73 +2,83 @@ import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 
+import { resolveOutcome, verifyWebhookSignature } from "@/lib/doku";
 import { db } from "@/lib/db";
 import { orderItems, orders, variants } from "@/lib/db/schema";
-import {
-  resolveOutcome,
-  verifyNotificationSignature,
-  type MidtransNotification,
-} from "@/lib/midtrans";
 import { formatIDR } from "@/lib/money";
 import { notifyOwner, notifyPaymentReceived } from "@/lib/notify";
 import { releaseDiscountUse } from "@/lib/orders";
 
 /**
- * Midtrans payment notification.
+ * DOKU payment notification.
  *
- * Configure the URL in the Midtrans dashboard under
- * Settings → Configuration → Payment Notification URL:
- *   https://your-domain/api/webhooks/midtrans
+ * Configure the Notification URL in the DOKU Back Office to:
+ *   https://your-domain/api/webhooks/doku
  *
  * Three things this handler must get right, in order:
  *   1. Verify the signature. Everything else is untrusted until it passes.
  *   2. Verify the amount matches what we recorded for the order.
- *   3. Be idempotent — Midtrans retries, and stock must only ever move once.
+ *   3. Be idempotent — DOKU retries (up to 6 times, exponential backoff) until
+ *      it gets a 2xx, and stock must only ever move once.
  */
 
+const REQUEST_TARGET = "/api/webhooks/doku";
+
+type DokuNotification = {
+  order: { invoice_number: string; amount: number | string };
+  transaction: { status: string; original_request_id?: string; date?: string };
+  channel?: { id?: string };
+  service?: { id?: string };
+};
+
 export async function POST(request: NextRequest) {
-  let notification: MidtransNotification;
-  try {
-    notification = (await request.json()) as MidtransNotification;
-  } catch {
-    return Response.json({ error: "Malformed body" }, { status: 400 });
-  }
+  const rawBody = await request.text();
+
+  const headers = {
+    clientId: request.headers.get("Client-Id") ?? "",
+    requestId: request.headers.get("Request-Id") ?? "",
+    requestTimestamp: request.headers.get("Request-Timestamp") ?? "",
+    signature: request.headers.get("Signature") ?? "",
+  };
 
   /* 1. Authenticity -------------------------------------------------------- */
-  if (!verifyNotificationSignature(notification)) {
-    console.warn(
-      "Rejected Midtrans notification with a bad signature:",
-      notification.order_id,
-    );
+  if (!verifyWebhookSignature(headers, rawBody, REQUEST_TARGET)) {
+    console.warn("Rejected DOKU notification with a bad signature");
     return Response.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  let notification: DokuNotification;
+  try {
+    notification = JSON.parse(rawBody) as DokuNotification;
+  } catch {
+    return Response.json({ error: "Malformed body" }, { status: 400 });
   }
 
   const [order] = await db
     .select()
     .from(orders)
-    .where(eq(orders.midtransOrderId, notification.order_id))
+    .where(eq(orders.dokuInvoiceNumber, notification.order.invoice_number))
     .limit(1);
 
   if (!order) {
-    // 200 so Midtrans stops retrying a notification we can never satisfy.
-    console.warn("Notification for unknown order", notification.order_id);
+    // 200 so DOKU stops retrying a notification we can never satisfy.
+    console.warn("Notification for unknown order", notification.order.invoice_number);
     return Response.json({ received: true, note: "unknown order" });
   }
 
   /* 2. Amount -------------------------------------------------------------- */
-  // gross_amount arrives as "498000.00"; compare against what we stored.
-  const notifiedAmount = Math.round(Number(notification.gross_amount));
+  const notifiedAmount = Math.round(Number(notification.order.amount));
   if (notifiedAmount !== order.grandTotal) {
     console.error(
       `Amount mismatch on ${order.orderNumber}: notified ${notifiedAmount}, expected ${order.grandTotal}`,
     );
     await notifyOwner(
-      `⚠️ Amount mismatch on ${order.orderNumber}. Midtrans says ${formatIDR(notifiedAmount)}, we expected ${formatIDR(order.grandTotal)}. Order NOT marked paid.`,
+      `⚠️ Amount mismatch on ${order.orderNumber}. DOKU says ${formatIDR(notifiedAmount)}, we expected ${formatIDR(order.grandTotal)}. Order NOT marked paid.`,
     );
     return Response.json({ error: "Amount mismatch" }, { status: 409 });
   }
 
-  const outcome = resolveOutcome(notification);
+  const outcome = resolveOutcome(notification.transaction.status);
 
   /* 3. Apply --------------------------------------------------------------- */
   const oversold: string[] = [];
@@ -86,8 +96,9 @@ export async function POST(request: NextRequest) {
     if (!locked) return;
 
     const shared = {
-      midtransTransactionId: notification.transaction_id ?? null,
-      paymentMethod: notification.payment_type ?? null,
+      dokuTransactionId: notification.transaction.original_request_id ?? null,
+      paymentMethod:
+        notification.channel?.id ?? notification.service?.id ?? null,
       updatedAt: new Date(),
     };
 

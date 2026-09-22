@@ -105,7 +105,7 @@ test("every total is a whole rupiah", () => {
 });
 
 test("a 100% discount with free shipping leaves nothing to charge", () => {
-  // Checkout must refuse this rather than send gross_amount = 0 to Midtrans.
+  // Checkout must refuse this rather than send amount = 0 to DOKU.
   const totals = computeTotals({
     subtotal: 600_000,
     discount: { type: "percent", value: 100, minSubtotal: 0 },

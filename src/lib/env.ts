@@ -2,7 +2,7 @@
  * Read a required server-side environment variable.
  *
  * Deliberately lazy: it throws at the call site rather than at import time, so
- * a missing Midtrans key breaks checkout with a clear message instead of
+ * a missing DOKU key breaks checkout with a clear message instead of
  * refusing to boot the whole app while you're still building the storefront.
  */
 export function requireEnv(name: string): string {
@@ -23,7 +23,7 @@ export function optionalEnv(name: string): string | undefined {
 /**
  * The variables without which the app cannot serve a page at all.
  *
- * Everything else (Midtrans, Biteship, Fonnte, Resend, analytics) degrades
+ * Everything else (DOKU, Biteship, Fonnte, Resend, analytics) degrades
  * gracefully, so it is deliberately not listed here.
  *
  * Note these are read as literal `process.env.X` rather than through a loop:
@@ -51,7 +51,7 @@ export function isLocalDatabase(): boolean {
   );
 }
 
-/** Absolute origin, needed for Midtrans callbacks and OG image URLs. */
+/** Absolute origin, needed for DOKU callbacks and OG image URLs. */
 export function siteUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL;
   if (explicit) return explicit.replace(/\/$/, "");
