@@ -96,9 +96,12 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Lookbook ---------------------------------------------------------- */}
+      {showcases[0] && <ShowcaseBand showcase={showcases[0]} index="01" />}
+
       {/* Featured ---------------------------------------------------------- */}
-      <section className="mx-auto max-w-[1600px] px-5 pb-20 sm:px-8">
-        <SectionHead index="01" title="Featured" href="/shop" linkLabel="View all" />
+      <section className="mx-auto max-w-[1600px] px-5 py-20 sm:px-8">
+        <SectionHead index="02" title="Featured" href="/shop" linkLabel="View all" />
 
         {featured.length === 0 ? (
           <p className="border border-dashed border-line px-6 py-16 text-center text-sm text-muted">
@@ -116,9 +119,6 @@ export default async function HomePage() {
           </ProductGrid>
         )}
       </section>
-
-      {/* Lookbook ---------------------------------------------------------- */}
-      {showcases[0] && <ShowcaseBand showcase={showcases[0]} index="02" />}
 
       {/* Drop list --------------------------------------------------------- */}
       <section className="border-t border-line py-24">
