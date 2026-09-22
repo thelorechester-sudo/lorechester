@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash, createHmac } from "node:crypto";
 import { test } from "node:test";
 
-import { resolveOutcome, verifyWebhookSignature } from "./doku";
+import { resolveOutcome, sanitizeDokuText, verifyWebhookSignature } from "./doku";
 
 const SECRET = "SK-TESTSECRET123";
 const TARGET = "/api/webhooks/doku";
@@ -133,4 +133,27 @@ test("FAILED maps to failed", () => {
 
 test("an unknown status is treated as pending, never as paid", () => {
   assert.equal(resolveOutcome("SOMETHING_NEW"), "pending");
+});
+
+test("em and en dashes become a plain hyphen", () => {
+  assert.equal(
+    sanitizeDokuText("No City Humbles Us — White"),
+    "No City Humbles Us - White",
+  );
+  assert.equal(sanitizeDokuText("Shipping – Flat rate"), "Shipping - Flat rate");
+});
+
+test("curly quotes become straight ones", () => {
+  assert.equal(sanitizeDokuText("Editor’s pick"), "Editor's pick");
+});
+
+test("characters outside DOKU's allowed set are dropped, not just the ones seen so far", () => {
+  assert.equal(sanitizeDokuText("Café ✦ Terrace #1"), "Caf  Terrace 1");
+});
+
+test("plain ASCII text passes through untouched", () => {
+  assert.equal(
+    sanitizeDokuText("Compass Tee (M) - qty 2"),
+    "Compass Tee (M) - qty 2",
+  );
 });

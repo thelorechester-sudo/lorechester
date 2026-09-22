@@ -80,6 +80,22 @@ function digestOf(rawBody: string): string {
   return createHash("sha256").update(rawBody, "utf-8").digest("base64");
 }
 
+/**
+ * DOKU rejects `order.line_items[].name` and `customer.name` outside
+ * `a-z A-Z 0-9 . - / + , = _ : ' @ % ( )` (plus space) with a 400 — no
+ * transliteration, just a flat reject. Product titles and the generated
+ * "Shipping — X" line use an em dash, which is outside that set, so this
+ * normalises typographic punctuation to its ASCII equivalent and drops
+ * anything else DOKU won't take instead of failing the whole payment.
+ */
+export function sanitizeDokuText(value: string): string {
+  return value
+    .replace(/[—–]/g, "-")
+    .replace(/[’‘]/g, "'")
+    .replace(/[^a-zA-Z0-9 .\-/+,=_:'@%()]/g, "")
+    .trim();
+}
+
 /* -------------------------------------------------------------------------- */
 /* Create payment                                                             */
 /* -------------------------------------------------------------------------- */
@@ -142,7 +158,7 @@ export async function createDokuPayment(
       auto_redirect: true,
       line_items: args.lineItems.map((item) => ({
         id: item.id,
-        name: item.name.slice(0, 100),
+        name: sanitizeDokuText(item.name).slice(0, 100),
         price: item.price,
         quantity: item.quantity,
       })),
@@ -151,7 +167,7 @@ export async function createDokuPayment(
       payment_due_date: args.expiryMinutes ?? 24 * 60,
     },
     customer: {
-      name: args.customer.name.slice(0, 100),
+      name: sanitizeDokuText(args.customer.name).slice(0, 100),
       email: args.customer.email,
       phone: args.customer.phone,
     },
