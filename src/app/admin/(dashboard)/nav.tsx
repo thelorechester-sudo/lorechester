@@ -8,6 +8,7 @@ import { cx } from "@/components/admin/ui";
 /** Add an entry here only once the route actually exists. */
 const LINKS = [
   { href: "/admin", label: "Overview", exact: true },
+  { href: "/admin/home", label: "Home page" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/collections", label: "Collections" },

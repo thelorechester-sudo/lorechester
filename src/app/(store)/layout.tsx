@@ -5,6 +5,7 @@ import { DemoBanner } from "@/components/store/demo-banner";
 import { Footer } from "@/components/store/footer";
 import { Header, type NavLink } from "@/components/store/header";
 import { getCollections } from "@/lib/catalog";
+import { getHomeSettings } from "@/lib/content";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
 
 /*
@@ -16,7 +17,10 @@ export const dynamic = "force-dynamic";
 
 export default async function StoreLayout({ children }: LayoutProps<"/">) {
   // An unconfigured deploy never reaches here — proxy.ts rewrites to /setup.
-  const collections = await getCollections();
+  const [collections, home] = await Promise.all([
+    getCollections(),
+    getHomeSettings(),
+  ]);
 
   const links: NavLink[] = [
     { href: "/", label: "Home" },
@@ -40,7 +44,10 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
       </a>
 
       <DemoBanner />
-      <AnnouncementBar freeShippingThreshold={FREE_SHIPPING_THRESHOLD} />
+      <AnnouncementBar
+        freeShippingThreshold={FREE_SHIPPING_THRESHOLD}
+        messages={home.marquee}
+      />
       <Header links={links} />
 
       <main id="main" className="flex-1">

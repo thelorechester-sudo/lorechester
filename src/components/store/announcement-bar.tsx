@@ -7,16 +7,17 @@ import { formatIDR } from "@/lib/money";
  */
 export function AnnouncementBar({
   freeShippingThreshold,
+  messages: custom,
 }: {
   freeShippingThreshold: number;
+  /** Admin-editable lines. The shipping line is always prepended. */
+  messages: string[];
 }) {
   const messages = [
     freeShippingThreshold > 0
       ? `Free shipping over ${formatIDR(freeShippingThreshold)}`
       : "Shipped nationwide",
-    "Uncommon wear on your terraces",
-    "Limited runs — once it's gone, it's gone",
-    "Jongeren uit Zuidoost-Azië",
+    ...custom,
   ];
 
   const strip = messages.join("  ✳  ");
