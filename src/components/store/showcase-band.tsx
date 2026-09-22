@@ -10,7 +10,13 @@ import { formatIDR } from "@/lib/money";
  * A lookbook shoot with a "shop the look" strip underneath — the shortest path
  * from "that looks good" to "add to bag".
  */
-export async function ShowcaseBand({ showcase }: { showcase: Showcase }) {
+export async function ShowcaseBand({
+  showcase,
+  index = "03",
+}: {
+  showcase: Showcase;
+  index?: string;
+}) {
   const tagged = await getShowcaseProducts(showcase.linkedProductIds);
   const [lead, ...rest] = showcase.images;
 
@@ -20,7 +26,7 @@ export async function ShowcaseBand({ showcase }: { showcase: Showcase }) {
     <section className="border-t border-line py-16">
       <div className="mx-auto max-w-[1600px] px-5 sm:px-8">
         <SectionHead
-          index="03"
+          index={index}
           title={showcase.title}
           href="/lookbook"
           linkLabel="All shoots"

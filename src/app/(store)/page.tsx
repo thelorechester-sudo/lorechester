@@ -5,11 +5,7 @@ import { NotifyMe } from "@/components/store/notify-me";
 import { ProductCard, ProductGrid } from "@/components/store/product-card";
 import { SectionHead } from "@/components/store/section-head";
 import { ShowcaseBand } from "@/components/store/showcase-band";
-import {
-  getCollections,
-  getFeaturedProducts,
-  getShopProducts,
-} from "@/lib/catalog";
+import { getCollections, getFeaturedProducts } from "@/lib/catalog";
 import { getPublishedShowcases } from "@/lib/content";
 
 // ponytail: rendered per-request so stock and sold-out badges are never stale.
@@ -18,14 +14,10 @@ import { getPublishedShowcases } from "@/lib/content";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [featured, collections, showcases, all] = await Promise.all([
+  const [featured, collections, showcases] = await Promise.all([
     getFeaturedProducts(8),
     getCollections(),
     getPublishedShowcases(1),
-    // Reused for the category tiles: one query, first image per category. The
-    // catalog is small enough that a dedicated grouped query would be a
-    // second query to save nothing.
-    getShopProducts({ sort: "newest" }),
   ]);
 
   const hero = collections[0];
@@ -33,17 +25,6 @@ export default async function HomePage() {
   const upcoming = collections.find(
     (collection) => collection.releaseAt && collection.releaseAt > new Date(),
   );
-
-  const categories = [
-    ...new Map(
-      all
-        .filter((product) => product.category && product.image)
-        .map((product) => [
-          product.category!,
-          { name: product.category!, image: product.image! },
-        ]),
-    ).values(),
-  ].slice(0, 4);
 
   return (
     <>
@@ -115,40 +96,9 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Categories -------------------------------------------------------- */}
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-[1600px] px-5 py-20 sm:px-8">
-          <SectionHead index="01" title="By article" />
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-            {categories.map((category) => (
-              <Link
-                key={category.name}
-                href={`/shop?category=${encodeURIComponent(category.name)}`}
-                className="group block"
-              >
-                <div className="relative aspect-[4/5] overflow-hidden bg-paper-pure">
-                  <Image
-                    src={category.image.url}
-                    alt=""
-                    aria-hidden
-                    fill
-                    sizes="(max-width: 640px) 50vw, 25vw"
-                    className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-ink/10 transition-colors duration-500 group-hover:bg-ink/35" />
-                  <span className="meta absolute bottom-4 left-4 text-paper">
-                    {category.name}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* Featured ---------------------------------------------------------- */}
       <section className="mx-auto max-w-[1600px] px-5 pb-20 sm:px-8">
-        <SectionHead index="02" title="Featured" href="/shop" linkLabel="View all" />
+        <SectionHead index="01" title="Featured" href="/shop" linkLabel="View all" />
 
         {featured.length === 0 ? (
           <p className="border border-dashed border-line px-6 py-16 text-center text-sm text-muted">
@@ -168,43 +118,7 @@ export default async function HomePage() {
       </section>
 
       {/* Lookbook ---------------------------------------------------------- */}
-      {showcases[0] && <ShowcaseBand showcase={showcases[0]} />}
-
-      {/* Editorial band ---------------------------------------------------- */}
-      {featured[1]?.image && (
-        <section className="relative grid min-h-[70vh] items-center bg-ink md:grid-cols-2">
-          <div className="relative h-full min-h-[50vh]">
-            <Image
-              src={featured[1].image.url}
-              alt={featured[1].image.alt || featured[1].title}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="px-5 py-20 sm:px-16">
-            <p className="meta text-accent">
-              Between the stone, steel, and stitch
-            </p>
-            <h2 className="mt-5 text-headline font-semibold uppercase text-paper">
-              Cut heavy.
-              <br />
-              Printed small.
-            </h2>
-            <p className="mt-6 max-w-sm text-sm leading-relaxed text-paper/70">
-              Every article gets a code before it gets a name, and every run is
-              capped. We print what we can stand behind, sell it once, and move
-              on to the next one.
-            </p>
-            <Link
-              href="/about"
-              className="meta mt-9 inline-block border-b border-paper/40 pb-1 text-paper transition-colors hover:border-accent"
-            >
-              Read more
-            </Link>
-          </div>
-        </section>
-      )}
+      {showcases[0] && <ShowcaseBand showcase={showcases[0]} index="02" />}
 
       {/* Drop list --------------------------------------------------------- */}
       <section className="border-t border-line py-24">
