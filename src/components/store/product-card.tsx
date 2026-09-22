@@ -104,7 +104,7 @@ export function ProductCard({
           )}
         </div>
 
-        <div className="flex items-baseline justify-between gap-3 pt-3.5">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 pt-3.5">
           <h3 className="text-sm font-medium leading-snug tracking-tight">
             {product.title}
           </h3>
