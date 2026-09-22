@@ -93,12 +93,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (user && pathname === "/admin/login") {
-    const adminUrl = request.nextUrl.clone();
-    adminUrl.pathname = "/admin";
-    adminUrl.search = "";
-    return NextResponse.redirect(adminUrl);
-  }
+  /*
+   * Deliberately no "authenticated -> bounce off /admin/login" rule here.
+   * This proxy only sees a valid Supabase session, not the admin role (that
+   * needs a DB round-trip, which requireAdmin() already does). A signed-in
+   * non-admin landing on /admin/login is exactly what requireAdmin() sends
+   * back here — redirecting them away again created an infinite loop with
+   * it, and also ate the page's own "not an admin" error message before it
+   * could render. The login form redirects to /admin itself on success, so
+   * this rule was never load-bearing.
+   */
 
   return response;
 }
