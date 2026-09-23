@@ -42,7 +42,7 @@ function apiKey(): string | undefined {
 }
 
 export function isShippingConfigured(): boolean {
-  return Boolean(apiKey() && optionalEnv("BITESHIP_ORIGIN_AREA_ID"));
+  return Boolean(apiKey() && optionalEnv("BITESHIP_ORIGIN_AREA_QUERY"));
 }
 
 async function biteship<T>(
@@ -98,6 +98,28 @@ export async function searchAreas(query: string): Promise<ShippingArea[]> {
   }));
 }
 
+/*
+ * The store's own pickup area, resolved once per warm serverless instance
+ * (same reuse pattern as the Postgres pool) rather than pinning a raw
+ * Biteship area id in an env var. That id is an internal identifier with no
+ * UI to copy it from — BITESHIP_ORIGIN_AREA_QUERY is just the address text
+ * already visible on the Biteship dashboard's Saved Address page.
+ */
+let cachedOriginAreaId: string | null | undefined;
+
+async function originAreaId(): Promise<string | null> {
+  if (cachedOriginAreaId !== undefined) return cachedOriginAreaId;
+
+  const query = optionalEnv("BITESHIP_ORIGIN_AREA_QUERY");
+  if (!query) return (cachedOriginAreaId = null);
+
+  const [area] = await searchAreas(query);
+  if (!area) {
+    console.error(`No Biteship area matched BITESHIP_ORIGIN_AREA_QUERY: "${query}"`);
+  }
+  return (cachedOriginAreaId = area?.id ?? null);
+}
+
 export type RateRequest = {
   destinationAreaId: string;
   destinationPostalCode: string;
@@ -109,9 +131,9 @@ export type RateRequest = {
 export async function getShippingOptions(
   request: RateRequest,
 ): Promise<ShippingOption[]> {
-  const originAreaId = optionalEnv("BITESHIP_ORIGIN_AREA_ID");
+  const resolvedOriginAreaId = await originAreaId();
 
-  if (!apiKey() || !originAreaId) {
+  if (!apiKey() || !resolvedOriginAreaId) {
     return [
       {
         key: "flat:standard",
@@ -139,7 +161,7 @@ export async function getShippingOptions(
   }>("/rates/couriers", {
     method: "POST",
     body: JSON.stringify({
-      origin_area_id: originAreaId,
+      origin_area_id: resolvedOriginAreaId,
       origin_postal_code: optionalEnv("BITESHIP_ORIGIN_POSTAL_CODE"),
       destination_area_id: request.destinationAreaId,
       destination_postal_code: request.destinationPostalCode,
