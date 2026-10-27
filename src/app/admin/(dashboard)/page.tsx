@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Badge, PageHeader } from "@/components/admin/ui";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { products, variants } from "@/lib/db/schema";
+import { orders, products, variants } from "@/lib/db/schema";
 import { formatIDR } from "@/lib/money";
 
 /** Anything at or below this is worth restocking before the next drop. */
@@ -105,12 +105,42 @@ export default async function AdminOverviewPage() {
     (product) => product.status === "active",
   );
 
+  const [todo] = await db
+    .select({
+      toPack: sql<number>`count(*) filter (where ${orders.status} = 'paid')::int`,
+      toShip: sql<number>`count(*) filter (where ${orders.status} = 'packed')::int`,
+    })
+    .from(orders);
+
   return (
     <>
       <PageHeader
         title="Overview"
-        description="Catalog health at a glance. Order figures land here once checkout is live."
+        description="What needs doing today, and how the shop looks."
+        action={
+          <Link
+            href="/admin/products/new"
+            className="inline-flex h-10 items-center rounded-md bg-ink px-4 text-sm font-medium text-paper hover:bg-ink-soft"
+          >
+            Add product
+          </Link>
+        }
       />
+
+      <section aria-label="Needs attention" className="mb-10 grid gap-4 sm:grid-cols-2">
+        <Stat
+          label="Orders to pack"
+          value={todo.toPack}
+          href="/admin/orders?status=paid"
+          tone={todo.toPack > 0 ? "danger" : undefined}
+        />
+        <Stat
+          label="Packed, waiting to ship"
+          value={todo.toShip}
+          href="/admin/orders?status=packed"
+          tone={todo.toShip > 0 ? "warning" : undefined}
+        />
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Products" value={counts.total} href="/admin/products" />

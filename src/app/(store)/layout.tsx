@@ -3,10 +3,9 @@ import { CartDrawer } from "@/components/store/cart-drawer";
 import { CartProvider } from "@/components/store/cart-store";
 import { DemoBanner } from "@/components/store/demo-banner";
 import { Footer } from "@/components/store/footer";
-import { Header, type NavLink } from "@/components/store/header";
+import { Header } from "@/components/store/header";
 import { getCollections } from "@/lib/catalog";
-import { getHomeSettings } from "@/lib/content";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
+import { getHomeSettings, getSiteSettings } from "@/lib/content";
 
 /*
  * The header reads collections from the database, so every page under this
@@ -17,22 +16,17 @@ export const dynamic = "force-dynamic";
 
 export default async function StoreLayout({ children }: LayoutProps<"/">) {
   // An unconfigured deploy never reaches here — proxy.ts rewrites to /setup.
-  const [collections, home] = await Promise.all([
+  const [collections, home, site] = await Promise.all([
     getCollections(),
     getHomeSettings(),
+    getSiteSettings(),
   ]);
 
-  const links: NavLink[] = [
-    { href: "/", label: "Home" },
-    { href: "/shop", label: "Shop" },
-    // Every admin-managed collection is reachable from /collections. Hidden
-    // entirely when there are none, so the nav never points at an empty page.
-    ...(collections.length > 0
-      ? [{ href: "/collections", label: "Collection" }]
-      : []),
-    { href: "/journal", label: "Journal" },
-    { href: "/about", label: "About" },
-  ];
+  // The menu is admin-editable. /collections is hidden while there are none,
+  // so the nav never points at an empty page.
+  const links = site.nav.filter(
+    (link) => link.href !== "/collections" || collections.length > 0,
+  );
 
   return (
     <CartProvider>
@@ -45,7 +39,7 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
 
       <DemoBanner />
       <AnnouncementBar
-        freeShippingThreshold={FREE_SHIPPING_THRESHOLD}
+        freeShippingThreshold={site.freeShippingThreshold}
         messages={home.marquee}
       />
       <Header links={links} />
@@ -54,8 +48,8 @@ export default async function StoreLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
 
-      <Footer />
-      <CartDrawer freeShippingThreshold={FREE_SHIPPING_THRESHOLD} />
+      <Footer site={site} />
+      <CartDrawer freeShippingThreshold={site.freeShippingThreshold} />
     </CartProvider>
   );
 }

@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { orderItems, orders, variants } from "@/lib/db/schema";
 import { formatIDR } from "@/lib/money";
 import { notifyOwner, notifyPaymentReceived } from "@/lib/notify";
+import { sendAdminPush } from "@/lib/push";
 import { releaseDiscountUse } from "@/lib/orders";
 
 /**
@@ -210,6 +211,14 @@ export async function POST(request: NextRequest) {
     await notifyOwner(
       `💰 New paid order ${order.orderNumber} — ${formatIDR(order.grandTotal)}`,
     );
+
+    // Phone alert for the admin (Home Screen web app). Never throws.
+    await sendAdminPush({
+      title: `New order ${order.orderNumber}`,
+      body: `${formatIDR(order.grandTotal)} · ${items.reduce((sum, item) => sum + item.qty, 0)} item(s) · ready to pack`,
+      url: `/admin/orders/${order.id}`,
+      tag: order.orderNumber,
+    });
 
     if (oversold.length) {
       await notifyOwner(

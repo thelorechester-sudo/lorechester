@@ -110,9 +110,11 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Everything except static assets and image files — matching those would
-     * add a Supabase round-trip to every icon request.
+     * Everything except static assets, image files, the manifest and the
+     * service worker. Matching those would add a Supabase round-trip to every
+     * icon request, and the manifest path starts with "/admin", so it would be
+     * bounced to the login page before the browser could read it.
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?|webmanifest)$).*)",
   ],
 };

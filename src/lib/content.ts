@@ -1,9 +1,19 @@
 import "server-only";
 
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { cache } from "react";
 
+import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
 import { db } from "@/lib/db";
 import { articles, products, settings, showcases } from "@/lib/db/schema";
+import {
+  pageKey,
+  pageSettingsSchema,
+  resolvePage,
+  type PageContent,
+  type PageSlug,
+} from "@/lib/pages";
+import { SITE_KEY, resolveSite, siteSettingsSchema, type ResolvedSite } from "@/lib/site";
 import {
   HOME_KEY,
   homeSettingsSchema,
@@ -78,4 +88,40 @@ export async function getHomeSettings(): Promise<ResolvedHome> {
   }
 
   return resolveHome(parsed.data);
+}
+
+/**
+ * Site-wide settings (navigation, footer, contact details, free-shipping
+ * offer). Cached per request: the layout, the footer and the page body all
+ * need it. Falls back to the built-in values on a missing or invalid row.
+ */
+export const getSiteSettings = cache(async (): Promise<ResolvedSite> => {
+  const [row] = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, SITE_KEY))
+    .limit(1);
+
+  const parsed = row ? siteSettingsSchema.safeParse(row.value) : null;
+  if (row && !parsed?.success) {
+    console.warn("site settings failed validation; using defaults");
+  }
+
+  return resolveSite(parsed?.success ? parsed.data : {}, FREE_SHIPPING_THRESHOLD);
+});
+
+/** An editable text page, with the built-in wording for anything unset. */
+export async function getPageContent(slug: PageSlug): Promise<PageContent> {
+  const [row] = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, pageKey(slug)))
+    .limit(1);
+
+  const parsed = row ? pageSettingsSchema.safeParse(row.value) : null;
+  if (row && !parsed?.success) {
+    console.warn(`page "${slug}" failed validation; using defaults`);
+  }
+
+  return resolvePage(slug, parsed?.success ? parsed.data : {});
 }

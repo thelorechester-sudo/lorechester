@@ -346,6 +346,28 @@ export const profiles = pgTable(
   (t) => [index("profiles_role_idx").on(t.role)],
 );
 
+/**
+ * Browser push subscriptions for admin order alerts (iOS Home Screen web app,
+ * desktop browsers). One row per device. `endpoint` is unique — re-subscribing
+ * from the same device updates its row instead of adding a duplicate — and a
+ * row is deleted as soon as the push service reports the device gone.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("push_subscriptions_user_idx").on(t.userId)],
+);
+
 /* ------------------------------------------------------------------ */
 /* Relations                                                           */
 /* ------------------------------------------------------------------ */

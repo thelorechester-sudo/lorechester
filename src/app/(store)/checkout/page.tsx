@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { isConfigured as isDokuConfigured } from "@/lib/doku";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
+import { getSiteSettings } from "@/lib/content";
 import { isShippingConfigured } from "@/lib/shipping";
 import { CheckoutForm } from "./checkout-form";
 
@@ -12,7 +12,9 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
+  const site = await getSiteSettings();
+
   return (
     <>
       {!isDokuConfigured() && (
@@ -23,7 +25,7 @@ export default function CheckoutPage() {
       )}
 
       <CheckoutForm
-        freeShippingThreshold={FREE_SHIPPING_THRESHOLD}
+        freeShippingThreshold={site.freeShippingThreshold}
         shippingConfigured={isShippingConfigured()}
       />
     </>

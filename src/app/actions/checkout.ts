@@ -6,7 +6,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { priceCart } from "@/lib/cart";
 import { cartItemsSchema } from "@/lib/cart-types";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/config";
+import { getSiteSettings } from "@/lib/content";
 import { db } from "@/lib/db";
 import { orderItems, orders } from "@/lib/db/schema";
 import { createDokuPayment, isConfigured as isDokuConfigured } from "@/lib/doku";
@@ -210,7 +210,8 @@ export async function createOrder(
     subtotal: cart.subtotal,
     discount: rule,
     shippingPrice: shipping.price,
-    freeShippingThreshold: FREE_SHIPPING_THRESHOLD,
+    // Read here, never from the client: the threshold is part of the price.
+    freeShippingThreshold: (await getSiteSettings()).freeShippingThreshold,
   });
 
   if (totals.grandTotal <= 0) {
