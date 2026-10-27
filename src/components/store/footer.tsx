@@ -23,7 +23,7 @@ export function Footer({ site }: { site: ResolvedSite }) {
 
   return (
     <footer className="border-t border-line bg-paper text-ink">
-      <div className="mx-auto max-w-[1600px] px-5 py-16 sm:px-8">
+      <div className="mx-auto max-w-[1600px] px-5 pb-[calc(4rem+env(safe-area-inset-bottom))] pt-16 sm:px-8">
         <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             {/* Roundel, not the lockup — the lockup asset is white-only and
@@ -70,7 +70,7 @@ export function Footer({ site }: { site: ResolvedSite }) {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-ink-soft transition-colors hover:text-accent"
+                      className="inline-block py-0.5 pointer-coarse:py-2 text-sm text-ink-soft transition-colors hover:text-accent"
                     >
                       {link.label}
                     </Link>

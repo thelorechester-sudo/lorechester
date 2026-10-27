@@ -115,7 +115,7 @@ export default async function WaitlistPage() {
           <section>
             <h2 className="mb-3 text-sm font-semibold">Recent signups</h2>
             <div className="overflow-x-auto rounded-lg border border-line bg-paper-pure">
-              <table className="w-full min-w-[640px] text-sm">
+              <table className="table-stack w-full text-sm md:min-w-[640px]">
                 <thead>
                   <tr className="border-b border-line text-left">
                     <th className="meta px-4 py-3 text-muted">Email</th>
@@ -129,22 +129,22 @@ export default async function WaitlistPage() {
                   {recent.map((row) => (
                     <tr key={row.id} className="border-b border-line last:border-0">
                       <td className="px-4 py-2.5">{row.email}</td>
-                      <td className="px-4 py-2.5 font-mono text-xs text-muted">
+                      <td data-label="WhatsApp" className="px-4 py-2.5 font-mono text-xs text-muted">
                         {row.phone ?? "—"}
                       </td>
-                      <td className="px-4 py-2.5">
+                      <td data-label="Wants" className="px-4 py-2.5">
                         {row.title}
                         {row.size && (
                           <span className="meta ml-2 text-muted">{row.size}</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-xs text-muted">
+                      <td data-label="Signed up" className="px-4 py-2.5 text-xs text-muted">
                         {row.createdAt.toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "short",
                         })}
                       </td>
-                      <td className="px-4 py-2.5 text-xs">
+                      <td data-label="Told" className="px-4 py-2.5 text-xs">
                         {row.notifiedAt ? (
                           <span className="text-emerald-700">✓</span>
                         ) : (

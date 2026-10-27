@@ -80,7 +80,7 @@ export default async function DashboardLayout({
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-10 px-4 py-8 sm:px-6 lg:py-10">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 gap-10 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-8 sm:px-6 lg:pb-10 lg:pt-10">
         <AdminSidebar toPack={toPack} />
         <main className="min-w-0 flex-1">{children}</main>
       </div>

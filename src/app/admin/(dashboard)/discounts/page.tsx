@@ -51,7 +51,7 @@ export default async function DiscountsPage({
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-line bg-paper-pure">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="table-stack w-full text-sm md:min-w-[720px]">
             <thead>
               <tr className="border-b border-line text-left">
                 <th className="meta px-4 py-3 text-muted">Code</th>
@@ -97,21 +97,21 @@ export default async function DiscountsPage({
                         )}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs">
+                    <td data-label="Discount" className="px-4 py-3 font-mono text-xs">
                       {discount.type === "percent"
                         ? `${discount.value}%`
                         : formatIDR(discount.value)}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted">
+                    <td data-label="Minimum" className="px-4 py-3 font-mono text-xs text-muted">
                       {discount.minSubtotal > 0
                         ? formatIDR(discount.minSubtotal)
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 text-xs">
+                    <td data-label="Used" className="px-4 py-3 text-xs">
                       {discount.usedCount}
                       {discount.usageLimit != null && ` / ${discount.usageLimit}`}
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted">
+                    <td data-label="Window" className="px-4 py-3 text-xs text-muted">
                       {discount.startsAt || discount.endsAt
                         ? `${discount.startsAt?.toLocaleDateString("en-GB") ?? "—"} → ${discount.endsAt?.toLocaleDateString("en-GB") ?? "—"}`
                         : "Always"}

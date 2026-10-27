@@ -56,7 +56,7 @@ export default async function ProductsPage({
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-line bg-paper-pure">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="table-stack w-full text-sm md:min-w-[720px]">
             <thead>
               <tr className="border-b border-line text-left">
                 <th className="meta px-4 py-3 text-muted">Product</th>
@@ -109,12 +109,12 @@ export default async function ProductsPage({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td data-label="Status" className="px-4 py-3">
                       <Badge tone={STATUS_TONE[product.status]}>
                         {product.status}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs">
+                    <td data-label="Price" className="px-4 py-3 font-mono text-xs">
                       {formatIDR(product.price)}
                       {product.compareAtPrice && (
                         <span className="ml-1.5 text-muted line-through">
@@ -122,7 +122,7 @@ export default async function ProductsPage({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td data-label="Stock" className="px-4 py-3">
                       <span
                         className={
                           totalStock === 0

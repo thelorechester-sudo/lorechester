@@ -52,7 +52,7 @@ export function Header({ links }: { links: NavLink[] }) {
       <div className="mx-auto flex h-[72px] max-w-[1600px] items-center gap-4 px-5 sm:px-8">
         <button
           type="button"
-          className="-ml-2 p-2 md:hidden"
+          className="-ml-3 flex size-11 items-center justify-center md:hidden"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
           onClick={() => {
@@ -69,7 +69,7 @@ export function Header({ links }: { links: NavLink[] }) {
           href="/"
           onClick={closeOverlays}
           aria-label="Lorechester, home"
-          className="flex shrink-0 items-center gap-2.5"
+          className="flex min-h-11 shrink-0 items-center gap-2.5"
         >
           <Image
             src="/brand/roundel.png"
@@ -130,7 +130,7 @@ export function Header({ links }: { links: NavLink[] }) {
         <div className="ml-auto flex items-center gap-4">
           <button
             type="button"
-            className="meta text-muted transition-colors hover:text-ink"
+            className="meta flex min-h-11 items-center text-muted transition-colors hover:text-ink"
             aria-expanded={searchOpen}
             onClick={() => {
               setMenuOpen(false);
@@ -143,7 +143,7 @@ export function Header({ links }: { links: NavLink[] }) {
           <button
             type="button"
             onClick={open}
-            className="meta text-ink transition-colors hover:text-accent"
+            className="meta flex min-h-11 items-center text-ink transition-colors hover:text-accent"
             aria-label={`Open bag${hydrated && count > 0 ? `, ${count} items` : ""}`}
           >
             Bag

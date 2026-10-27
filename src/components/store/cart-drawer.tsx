@@ -47,7 +47,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
       ref={dialogRef}
       onClose={close}
       aria-label="Shopping bag"
-      className="ml-auto h-full max-h-none w-full max-w-md bg-paper-pure p-0 text-ink backdrop:bg-ink/40"
+      className="ml-auto h-dvh max-h-none w-full max-w-md bg-paper-pure p-0 text-ink backdrop:bg-ink/40"
     >
       <div className="flex h-full flex-col">
         <header className="flex items-center justify-between border-b border-line px-5 py-4">
@@ -58,7 +58,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
             type="button"
             onClick={close}
             aria-label="Close bag"
-            className="p-1 text-lg leading-none"
+            className="-mr-2 flex size-11 items-center justify-center text-lg leading-none"
           >
             ✕
           </button>
@@ -151,7 +151,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
                           aria-label={`Increase quantity of ${line.title}`}
                           disabled={line.qty >= line.stock}
                           onClick={() => setQty(line.variantId, line.qty + 1)}
-                          className="px-2.5 py-1 text-sm hover:bg-paper disabled:opacity-30"
+                          className="px-3 py-2 text-sm hover:bg-paper disabled:opacity-30"
                         >
                           +
                         </button>
@@ -167,7 +167,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
                     type="button"
                     aria-label={`Remove ${line.title} from bag`}
                     onClick={() => remove(line.variantId)}
-                    className="self-start p-1 text-xs text-muted hover:text-accent"
+                    className="-mr-2 -mt-1 flex size-11 items-center justify-center self-start text-xs text-muted hover:text-accent"
                   >
                     ✕
                   </button>
@@ -175,7 +175,7 @@ export function CartDrawer({ freeShippingThreshold }: { freeShippingThreshold: n
               ))}
             </ul>
 
-            <footer className="border-t border-line px-5 py-4">
+            <footer className="border-t border-line px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
               {freeShippingThreshold > 0 && (
                 <p className="meta mb-3 text-muted">
                   {qualifies

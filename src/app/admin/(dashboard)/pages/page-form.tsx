@@ -114,7 +114,7 @@ export function PageForm({
           />
         </Field>
 
-        <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-paper-pure/95 px-4 py-4 backdrop-blur sm:mx-0 sm:px-0">
+        <div className="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-paper-pure/95 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur sm:mx-0 sm:px-0">
           <SaveButton />
           <Button type="button" variant="secondary" disabled={resetting} onClick={restore}>
             {resetting ? "Restoring…" : "Restore built-in text"}

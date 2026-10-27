@@ -82,7 +82,7 @@ export default async function OrdersPage({
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-line bg-paper-pure">
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="table-stack w-full text-sm md:min-w-[760px]">
             <thead>
               <tr className="border-b border-line text-left">
                 <th className="meta px-4 py-3 text-muted">Order</th>
@@ -104,22 +104,22 @@ export default async function OrdersPage({
                       {order.orderNumber}
                     </Link>
                   </td>
-                  <td className="max-w-48 truncate px-4 py-3">
+                  <td data-label="Customer" className="max-w-48 truncate px-4 py-3">
                     {order.shippingAddress.recipientName}
                     <span className="block truncate text-xs text-muted">
                       {order.email}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted">
+                  <td data-label="Items" className="px-4 py-3 text-muted">
                     {order.items.reduce((sum, item) => sum + item.qty, 0)}
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs">
+                  <td data-label="Total" className="px-4 py-3 font-mono text-xs">
                     {formatIDR(order.grandTotal)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="Status" className="px-4 py-3">
                     <Badge tone={STATUS_TONE[order.status]}>{order.status}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted">
+                  <td data-label="Placed" className="px-4 py-3 text-xs text-muted">
                     {order.createdAt.toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",

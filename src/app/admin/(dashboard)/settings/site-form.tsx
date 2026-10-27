@@ -319,7 +319,7 @@ export function SiteForm({
         </Field>
       </Section>
 
-      <div className="sticky bottom-0 -mx-4 flex items-center gap-3 border-t border-line bg-paper-pure/95 px-4 py-4 backdrop-blur sm:-mx-0 sm:px-0">
+      <div className="sticky bottom-0 -mx-4 flex items-center gap-3 border-t border-line bg-paper-pure/95 px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur sm:-mx-0 sm:px-0">
         <SaveButton />
         <p className="text-xs text-muted">
           Empty text fields keep the built-in wording.

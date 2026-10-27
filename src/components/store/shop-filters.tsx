@@ -217,7 +217,7 @@ function Option({
     <Link
       href={href}
       aria-current={active ? "true" : undefined}
-      className="group/opt flex items-center gap-2.5 py-1.5 text-sm leading-tight text-muted transition-colors hover:text-ink"
+      className="group/opt flex items-center gap-2.5 py-1.5 pointer-coarse:py-3 text-sm leading-tight text-muted transition-colors hover:text-ink"
     >
       {box}
       {label}
@@ -467,7 +467,7 @@ export function SortMenu({ base, params }: { base: string; params: Params }) {
             })}
             aria-current={option.value === active ? "true" : undefined}
             className={
-              "block rounded-input px-3 py-2 text-sm transition-colors " +
+              "block rounded-input px-3 py-2 pointer-coarse:py-3 text-sm transition-colors " +
               (option.value === active
                 ? "bg-ink text-paper"
                 : "text-muted hover:bg-paper hover:text-ink")
